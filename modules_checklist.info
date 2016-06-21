@@ -1,0 +1,3 @@
+name = Modules Checklist
+description = Tracks enabling and disabling modules on the site.
+core = 7.x
