@@ -4,3 +4,73 @@
  * @file
  * modules_checklist.module.
  */
+
+// @todo write on the Status Report page - the module is enabled but no config found.
+// @todo implement same logic for optional modules.
+// @todo create Views based sub-module that provides admin log with filters for tracking enabling/disabling modules.
+// @todo use Entity API and custom schema for log entries.
+// @todo write into watchdog and variable on disabling the module, extract data from watchdog and variable on enabling.
+// @todo create README.txt file
+// @todo create Project Page and promote the module to the permanent d.org project.
+// @todo install the module on Prod sites.
+
+/**
+ * Returns array of missing required modules and enabled extra modules.
+ *
+ * Compares enabled modules with the predefined list of modules.
+ *
+ * @return array
+ */
+function modules_checklist_get_modules_diff() {
+  $required_modules = modules_checklist_get_required_modules();
+  $enabled_modules = modules_checklist_get_enabled_modules();
+
+  return array(
+    'optional_modules' => array_diff($enabled_modules, $required_modules),
+    'missing_modules' => array_diff($required_modules, $enabled_modules),
+  );
+}
+
+/**
+ * Returns array of names of the modules.
+ *
+ * @param array $modules
+ *
+ * @return array
+ */
+function modules_checklist_get_module_names($modules) {
+  $module_names = array();
+  $modules_data = system_rebuild_module_data();
+
+  foreach ($modules as $module) {
+    if (isset($modules_data[$module]->info['name'])) {
+      $module_names[] = $modules_data[$module]->info['name'];
+    }
+  }
+
+  return $module_names;
+}
+
+/**
+ * Returns array of enabled modules.
+ *
+ * @return array
+ */
+function modules_checklist_get_enabled_modules() {
+  $enabled_modules = array_keys(module_list());
+  sort($enabled_modules);
+
+  return modules_checklist_get_module_names($enabled_modules);
+}
+
+/**
+ * Returns array of required modules.
+ *
+ * @return array
+ */
+function modules_checklist_get_required_modules() {
+  $required_modules = variable_get('modules_checklist_required_modules', array());
+  sort($required_modules);
+
+  return modules_checklist_get_module_names($required_modules);
+}
