@@ -1,0 +1,57 @@
+<?php
+/**
+ * @file
+ * modules_checklist.install.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function modules_checklist_requirements($phase) {
+  $requirements = array();
+
+  if ('runtime' == $phase) {
+    $diff = modules_checklist_get_modules_diff();
+
+    if (empty($diff['optional_modules']) && empty($diff['missing_modules'])) {
+      $description = t('List of enabled modules matches with the list of required modules.');
+      $value = t('OK');
+      $severity = REQUIREMENT_OK;
+    }
+    else {
+      $description = t('Mismatch with the list of enabled/disabled modules was detected.');
+      $severity = REQUIREMENT_WARNING;
+      $message = array();
+
+      if (!empty($diff['missing_modules'])) {
+        $message[] = t('Required modules must be !enabled: !missing_modules.',
+          array(
+            '!enabled' => l('enabled', 'admin/modules'),
+            '!missing_modules' => implode(', ', $diff['missing_modules']),
+          )
+        );
+        $severity = REQUIREMENT_ERROR;
+      }
+
+      if (!empty($diff['optional_modules'])) {
+        $message[] = t('Optional modules are enabled: !optional_modules. Please !disable them.',
+          array(
+            '!disable' => l('disable', 'admin/modules'),
+            '!optional_modules' => implode(', ', $diff['optional_modules']),
+          )
+        );
+      }
+
+      $value = implode('<br />', $message);
+    }
+
+    $requirements['modules_checklist_status'] = array(
+      'title'       => t('Modules Chacklist'),
+      'description' => $description . '<br />',
+      'value'       => $value,
+      'severity'    => $severity,
+    );
+  }
+
+  return $requirements;
+}
