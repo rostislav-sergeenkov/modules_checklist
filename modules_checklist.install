@@ -46,7 +46,7 @@ function modules_checklist_requirements($phase) {
     }
 
     $requirements['modules_checklist_status'] = array(
-      'title'       => t('Modules Chacklist'),
+      'title'       => t('Modules Checklist'),
       'description' => $description . '<br />',
       'value'       => $value,
       'severity'    => $severity,
