@@ -5,7 +5,8 @@
  * modules_checklist.module.
  */
 
-// @todo write on the Status Report page - the module is enabled but no config found.
+// @todo create textarea where user can just copy the array of modules and insert it in settings.php.
+// @todo add link to that file on the status report page. Also display a diff with existing modules there.
 // @todo implement same logic for optional modules.
 // @todo create Views based sub-module that provides admin log with filters for tracking enabling/disabling modules.
 // @todo use Entity API and custom schema for log entries.
@@ -13,6 +14,7 @@
 // @todo create README.txt file
 // @todo create Project Page and promote the module to the permanent d.org project.
 // @todo install the module on Prod sites.
+// @todo fixed copy-paste in modules_checklist_get_enabled_modules() and modules_checklist_get_required_modules().
 
 /**
  * Returns array of missing required modules and enabled extra modules.
@@ -21,14 +23,28 @@
  *
  * @return array
  */
-function modules_checklist_get_modules_diff() {
+function modules_checklist_get_modules_status() {
+  $status = array(
+    'optional_modules' => array(),
+    'missing_modules' => array(),
+    'error_message' => '',
+  );
+
   $required_modules = modules_checklist_get_required_modules();
   $enabled_modules = modules_checklist_get_enabled_modules();
+  $config_path = conf_path() . '/settings.php';
 
-  return array(
-    'optional_modules' => array_diff($enabled_modules, $required_modules),
-    'missing_modules' => array_diff($required_modules, $enabled_modules),
-  );
+  if (empty($required_modules)) {
+    $status['error_message'] = t('Please add the list of required modules in !file.',
+      array('!file' => $config_path));
+
+    return $status;
+  }
+
+  $status['optional_modules'] = array_diff($enabled_modules, $required_modules);
+  $status['missing_modules'] = array_diff($required_modules, $enabled_modules);
+
+  return $status;
 }
 
 /**
@@ -58,9 +74,14 @@ function modules_checklist_get_module_names($modules) {
  */
 function modules_checklist_get_enabled_modules() {
   $enabled_modules = array_keys(module_list());
-  sort($enabled_modules);
 
-  return modules_checklist_get_module_names($enabled_modules);
+  if (!empty($enabled_modules)) {
+    sort($enabled_modules);
+
+    return modules_checklist_get_module_names($enabled_modules);
+  }
+
+  return array();
 }
 
 /**
@@ -70,7 +91,12 @@ function modules_checklist_get_enabled_modules() {
  */
 function modules_checklist_get_required_modules() {
   $required_modules = variable_get('modules_checklist_required_modules', array());
-  sort($required_modules);
 
-  return modules_checklist_get_module_names($required_modules);
+  if (!empty($required_modules)) {
+    sort($required_modules);
+
+    return modules_checklist_get_module_names($required_modules);
+  }
+
+  return array();
 }
