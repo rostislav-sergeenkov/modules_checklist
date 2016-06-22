@@ -11,33 +11,42 @@ function modules_checklist_requirements($phase) {
   $requirements = array();
 
   if ('runtime' == $phase) {
-    $diff = modules_checklist_get_modules_diff();
+    $status = modules_checklist_get_modules_status();
+    $config_path = conf_path() . '/settings.php';
 
-    if (empty($diff['optional_modules']) && empty($diff['missing_modules'])) {
-      $description = t('List of enabled modules matches with the list of required modules.');
-      $value = t('OK');
+    if (!empty($status['error_message'])) {
+      $description = $status['error_message'];
+      $severity = REQUIREMENT_ERROR;
+      $value = t('The list of required modules is not defined in !file.',
+        array('!file' => $config_path));
+    }
+    elseif (empty($status['optional_modules']) && empty($status['missing_modules'])) {
       $severity = REQUIREMENT_OK;
+      $description = t('List of enabled modules matches with the list of required modules defined in !file.',
+        array('!file' => $config_path));
+      $value = t('OK');
     }
     else {
-      $description = t('Mismatch with the list of enabled/disabled modules was detected.');
       $severity = REQUIREMENT_WARNING;
+      $description = t('Mismatch with the list of modules defined in !file was detected.',
+        array('!file' => $config_path));
       $message = array();
 
-      if (!empty($diff['missing_modules'])) {
+      if (!empty($status['missing_modules'])) {
+        $severity = REQUIREMENT_ERROR;
         $message[] = t('Required modules must be !enabled: !missing_modules.',
           array(
             '!enabled' => l('enabled', 'admin/modules'),
-            '!missing_modules' => implode(', ', $diff['missing_modules']),
+            '!missing_modules' => implode(', ', $status['missing_modules']),
           )
         );
-        $severity = REQUIREMENT_ERROR;
       }
 
-      if (!empty($diff['optional_modules'])) {
+      if (!empty($status['optional_modules'])) {
         $message[] = t('Optional modules are enabled: !optional_modules. Please !disable them.',
           array(
             '!disable' => l('disable', 'admin/modules'),
-            '!optional_modules' => implode(', ', $diff['optional_modules']),
+            '!optional_modules' => implode(', ', $status['optional_modules']),
           )
         );
       }
