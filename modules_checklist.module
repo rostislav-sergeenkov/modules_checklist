@@ -11,10 +11,9 @@
 // @todo create Views based sub-module that provides admin log with filters for tracking enabling/disabling modules.
 // @todo use Entity API and custom schema for log entries.
 // @todo write into watchdog and variable on disabling the module, extract data from watchdog and variable on enabling.
-// @todo create README.txt file
+// @todo update README.txt file
 // @todo create Project Page and promote the module to the permanent d.org project.
 // @todo install the module on Prod sites.
-// @todo fixed copy-paste in modules_checklist_get_enabled_modules() and modules_checklist_get_required_modules().
 
 /**
  * Returns array of missing required modules and enabled extra modules.
@@ -30,8 +29,8 @@ function modules_checklist_get_modules_status() {
     'error_message' => '',
   );
 
-  $required_modules = modules_checklist_get_required_modules();
-  $enabled_modules = modules_checklist_get_enabled_modules();
+  $required_modules = modules_checklist_get_modules('required');
+  $enabled_modules = modules_checklist_get_modules('enabled');
   $config_path = conf_path() . '/settings.php';
 
   if (empty($required_modules)) {
@@ -41,6 +40,7 @@ function modules_checklist_get_modules_status() {
     return $status;
   }
 
+  // @todo update logic for optional modules.
   $status['optional_modules'] = array_diff($enabled_modules, $required_modules);
   $status['missing_modules'] = array_diff($required_modules, $enabled_modules);
 
@@ -68,35 +68,31 @@ function modules_checklist_get_module_names($modules) {
 }
 
 /**
- * Returns array of enabled modules.
+ * Returns array of human readable names of modules according to the type.
  *
- * @return array
+ * @param $type
+ * @todo document possible $type
+ *
+ * @return array|null
  */
-function modules_checklist_get_enabled_modules() {
-  $enabled_modules = array_keys(module_list());
-
-  if (!empty($enabled_modules)) {
-    sort($enabled_modules);
-
-    return modules_checklist_get_module_names($enabled_modules);
+function modules_checklist_get_modules($type) {
+  switch ($type) {
+    case 'enabled':
+      $modules = array_keys(module_list());
+    case 'required':
+      $modules = variable_get('modules_checklist_required_modules', array());
+      // @todo implement logic for optional modules.
+    case 'optional':
+      $modules = variable_get('modules_checklist_optional_modules', array());
+    default:
+      $modules = array();
   }
 
-  return array();
-}
+  if (!empty($modules)) {
+    sort($modules);
 
-/**
- * Returns array of required modules.
- *
- * @return array
- */
-function modules_checklist_get_required_modules() {
-  $required_modules = variable_get('modules_checklist_required_modules', array());
-
-  if (!empty($required_modules)) {
-    sort($required_modules);
-
-    return modules_checklist_get_module_names($required_modules);
+    return modules_checklist_get_module_names($modules);
   }
 
-  return array();
+  return $modules;
 }
