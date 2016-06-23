@@ -5,15 +5,28 @@
  * modules_checklist.module.
  */
 
-// @todo create textarea where user can just copy the array of modules and insert it in settings.php.
+// @todo create textarea where user can just copy the array of modules and insert it in settings.php. Use format machine name - human name.
 // @todo add link to that file on the status report page. Also display a diff with existing modules there.
 // @todo implement same logic for optional modules.
 // @todo create Views based sub-module that provides admin log with filters for tracking enabling/disabling modules.
+// @todo think how to specify correct version for the sub-module.
 // @todo use Entity API and custom schema for log entries.
-// @todo write into watchdog and variable on disabling the module, extract data from watchdog and variable on enabling.
+// @todo implement protection: write into watchdog and variable on disabling the module, extract data from watchdog and variable on enabling.
+// @todo print drupal_set_message() on all pages of the site if the list modules doesn't match the config.
 // @todo update README.txt file
+// @todo implement hook_help() for both modules.
+// @todo implement log rotation.
 // @todo create Project Page and promote the module to the permanent d.org project.
+// @todo test log entry when using Drush.
+// @todo implement periodic check of systems table to ensure that entry for the manually enabled in DB modules is present in the log.
 // @todo install the module on Prod sites.
+
+/**
+ * Implements hook_help().
+ */
+function modules_checklist_help($path, $arg) {
+
+}
 
 /**
  * Returns array of missing required modules and enabled extra modules.
