@@ -1,0 +1,7 @@
+name = Modules Checklist Log
+description = Records modules_checklist events to log and provides administration UI for browsing events.
+core = 7.x
+dependencies[] = ctools
+dependencies[] = entity
+dependencies[] = views
+dependencies[] = views_ui
