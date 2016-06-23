@@ -13,6 +13,7 @@
 // @todo use Entity API and custom schema for log entries.
 // @todo implement protection: write into watchdog and variable on disabling the module, extract data from watchdog and variable on enabling.
 // @todo print drupal_set_message() on all pages of the site if the list modules doesn't match the config.
+// @todo create views display handlers for Module Names and Type (Status).
 // @todo update README.txt file
 // @todo implement hook_help() for both modules.
 // @todo implement log rotation.
@@ -77,7 +78,7 @@ function modules_checklist_get_module_names($modules) {
     }
     else {
       $module_names[$module_machine_name] =
-        $module_machine_name . ' [' . t('uninstalled') . ']';
+        $module_machine_name . ' [' . t('uninstalled and deleted') . ']';
     }
   }
 
