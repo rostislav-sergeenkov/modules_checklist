@@ -1,0 +1,53 @@
+<?php
+
+/**
+ * @file
+ * modules_checklist_log.install.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function modules_checklist_log_schema() {
+  $schema['modules_checklist_log'] = array(
+    'description' => 'Table that contains logs of all module_checklist events.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: unique event id.',
+      ),
+      'module_name' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'medium',
+        'description' => 'The machine name of the module.',
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The {users}.uid who triggered the event.',
+      ),
+      'type' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The type of the event.',
+      ),
+      'timestamp' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Unix timestamp of when event occurred.',
+      ),
+    ),
+    'primary key' => array('id'),
+    'indexes' => array(
+      'type' => array('type'),
+      'uid' => array('uid'),
+    ),
+  );
+
+  return $schema;
+}

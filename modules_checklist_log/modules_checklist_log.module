@@ -1,0 +1,155 @@
+<?php
+
+/**
+ * @file
+ * modules_checklist_log.module.
+ */
+
+// Defines types of events that module records.
+define('MODULES_CHECKLIST_LOG_TYPE_INSTALLED', 1);
+define('MODULES_CHECKLIST_LOG_TYPE_ENABLED', 2);
+define('MODULES_CHECKLIST_LOG_TYPE_DISABLED', 3);
+define('MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED', 4);
+
+/**
+ * Implements hook_help().
+ */
+function modules_checklist_log_help($path, $arg) {
+
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function modules_checklist_log_entity_info() {
+  return array(
+    'modules_checklist_log_entry' => array(
+      'label' => t('Modules Checklist Log Entry'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIController',
+      'views controller class' => 'EntityDefaultViewsController',
+      'base table' => 'modules_checklist_log',
+      'fieldable' => FALSE,
+      'entity keys' => array(
+        'id' => 'id',
+      ),
+      'module' => 'modules_checklist_log',
+    ),
+  );
+}
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function modules_checklist_log_entity_property_info() {
+  $properties = array(
+    'id' => array(
+      'type'  => 'integer',
+      'label' => t('Log entry ID'),
+      'description' => t('Unique log entry ID.'),
+      'schema field' => 'id',
+    ),
+    'module_name' => array(
+      'type'  => 'text',
+      'label' => t('Module Name'),
+      'description' => t('The machine name of the module.'),
+      'schema field' => 'module_name',
+    ),
+    'uid' => array(
+      'type'  => 'integer',
+      'label' => t('UID'),
+      'description' => t('The ID of the user who triggered the event.'),
+      'schema field' => 'uid',
+    ),
+    'type' => array(
+      'type'  => 'integer',
+      'label' => t('Type'),
+      'description' => t('The type of the event.'),
+      'schema field' => 'type',
+    ),
+    'timestamp' => array(
+      'type' => 'date',
+      'label' => t('Timestamp'),
+      'description' => t('Unix timestamp of when event occurred.'),
+      'schema field' => 'timestamp',
+    ),
+  );
+
+  $info['modules_checklist_log_entry']['properties'] = $properties;
+
+  return $info;
+}
+
+/**
+ * Implements hook_views_data_alter().
+ */
+function modules_checklist_log_views_data_alter(&$data) {
+  // Exposes uid as a relationship to users.
+  $data['modules_checklist_log']['author_info'] = array(
+    'title' => t('User information.'),
+    'help' => t('Information related to user who triggered the event.'),
+    'relationship' => array(
+      'base' => 'users',
+      'base field' => 'uid',
+      'relationship field' => 'uid',
+      'handler' => 'views_handler_relationship',
+      'label' => t('User information.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_modules_installed().
+ */
+function modules_checklist_log_modules_installed($modules) {
+  foreach ($modules as $module) {
+    modules_checklist_log_save($module, MODULES_CHECKLIST_LOG_TYPE_INSTALLED);
+  }
+}
+
+/**
+ * Implements hook_modules_enabled().
+ */
+function modules_checklist_log_modules_enabled($modules) {
+  foreach ($modules as $module) {
+    modules_checklist_log_save($module, MODULES_CHECKLIST_LOG_TYPE_ENABLED);
+  }
+}
+
+/**
+ * Implements hook_modules_disabled().
+ */
+function modules_checklist_log_modules_disabled($modules) {
+  foreach ($modules as $module) {
+    modules_checklist_log_save($module, MODULES_CHECKLIST_LOG_TYPE_DISABLED);
+  }
+}
+
+/**
+ * Implements hook_modules_uninstalled().
+ */
+function modules_checklist_log_modules_uninstalled($modules) {
+  foreach ($modules as $module) {
+    modules_checklist_log_save($module, MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED);
+  }
+}
+
+/**
+ * Saves modules_checklist_log_entry entity to the DB.
+ *
+ * @param $module_name
+ * @param $type
+ */
+function modules_checklist_log_save($module_name, $type) {
+  global $user;
+
+  $modules_checklist_log_entry = entity_create(
+    'modules_checklist_log_entry', array(
+      'module_name' => $module_name,
+      'uid' => $user->uid,
+      'type' => $type,
+      'timestamp' => REQUEST_TIME,
+    )
+  );
+  entity_save('modules_checklist_log_entry', $modules_checklist_log_entry);
+}
