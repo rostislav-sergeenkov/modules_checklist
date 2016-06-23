@@ -15,7 +15,7 @@ define('MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED', 4);
  * Implements hook_help().
  */
 function modules_checklist_log_help($path, $arg) {
-  dpm(modules_checklist_log_get_usernames());
+
 }
 
 /**
