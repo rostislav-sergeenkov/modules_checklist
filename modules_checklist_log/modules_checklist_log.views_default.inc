@@ -29,6 +29,10 @@ function hook_views_default_views() {
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['pager']['type'] = 'full';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '50';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['pager']['options']['quantity'] = '9';
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
     'module_name' => 'module_name',
@@ -59,6 +63,13 @@ function hook_views_default_views() {
       'empty_column' => 0,
     ),
   );
+  /* No results behavior: Global: Text area */
+  $handler->display->display_options['empty']['area']['id'] = 'area';
+  $handler->display->display_options['empty']['area']['table'] = 'views';
+  $handler->display->display_options['empty']['area']['field'] = 'area';
+  $handler->display->display_options['empty']['area']['empty'] = TRUE;
+  $handler->display->display_options['empty']['area']['content'] = 'No results found.';
+  $handler->display->display_options['empty']['area']['format'] = 'plain_text';
   /* Relationship: Modules Checklist Log Entry: User information. */
   $handler->display->display_options['relationships']['author_info']['id'] = 'author_info';
   $handler->display->display_options['relationships']['author_info']['table'] = 'modules_checklist_log';
@@ -69,7 +80,7 @@ function hook_views_default_views() {
   $handler->display->display_options['fields']['module_name']['table'] = 'modules_checklist_log';
   $handler->display->display_options['fields']['module_name']['field'] = 'module_name';
   $handler->display->display_options['fields']['module_name']['element_label_colon'] = FALSE;
-  /* Field: Modules Checklist Log Entry: Type */
+  /* Field: Modules Checklist Log Entry: Status */
   $handler->display->display_options['fields']['type']['id'] = 'type';
   $handler->display->display_options['fields']['type']['table'] = 'modules_checklist_log';
   $handler->display->display_options['fields']['type']['field'] = 'type';
@@ -101,14 +112,14 @@ function hook_views_default_views() {
     2 => '2',
     1 => 0,
   );
-  /* Filter criterion: Modules Checklist Log Entry: Type */
+  /* Filter criterion: Modules Checklist Log Entry: Status */
   $handler->display->display_options['filters']['type']['id'] = 'type';
   $handler->display->display_options['filters']['type']['table'] = 'modules_checklist_log';
   $handler->display->display_options['filters']['type']['field'] = 'type';
   $handler->display->display_options['filters']['type']['group'] = 1;
   $handler->display->display_options['filters']['type']['exposed'] = TRUE;
   $handler->display->display_options['filters']['type']['expose']['operator_id'] = 'type_op';
-  $handler->display->display_options['filters']['type']['expose']['label'] = 'Type';
+  $handler->display->display_options['filters']['type']['expose']['label'] = 'Status';
   $handler->display->display_options['filters']['type']['expose']['operator'] = 'type_op';
   $handler->display->display_options['filters']['type']['expose']['identifier'] = 'type';
   $handler->display->display_options['filters']['type']['expose']['remember_roles'] = array(

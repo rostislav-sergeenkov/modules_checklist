@@ -19,6 +19,33 @@ function modules_checklist_log_help($path, $arg) {
 }
 
 /**
+ * Implements hook_permission().
+ */
+function modules_checklist_log_permission() {
+  return array(
+    'access modules_checklist log' => array(
+      'title' => t('View Modules Checklist Log'),
+      'description' => t('Access and view Modules Checklist Log.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function modules_checklist_log_menu() {
+  return array(
+    'admin/reports/modules_checklist_log' => array(
+      'title' => 'Modules Checklist Log',
+      'description' => 'Records modules_checklist events to log and provides administration UI for browsing events.',
+      'page callback' => 'modules_checklist_log_page',
+      'access arguments' => array('access modules_checklist log'),
+      'file' => 'modules_checklist_log.page.inc',
+    ),
+  );
+}
+
+/**
  * Implements hook_entity_info().
  */
 function modules_checklist_log_entity_info() {
@@ -63,8 +90,8 @@ function modules_checklist_log_entity_property_info() {
     ),
     'type' => array(
       'type'  => 'integer',
-      'label' => t('Type'),
-      'description' => t('The type of the event.'),
+      'label' => t('Status'),
+      'description' => t('The type of the event (status of the module).'),
       'schema field' => 'type',
     ),
     'timestamp' => array(
@@ -148,9 +175,18 @@ function modules_checklist_log_views_pre_render(&$view) {
         $view->result[$delta]->modules_checklist_log_module_name = $modules_data[$module_machine_name]->info['name'];
       }
       else {
-        $view->result[$delta]->modules_checklist_log_module_name = $module_machine_name . ' [' . t('uninstall') . ']';
+        $view->result[$delta]->modules_checklist_log_module_name = $module_machine_name . ' [' . t('uninstalled and deleted') . ']';
       }
+    }
+  }
+}
 
+/**
+ * Implements hook_views_post_render().
+ */
+function modules_checklist_log_views_post_render(&$view, &$output, &$cache) {
+  if ($view->name == 'modules_checklist_log') {
+    foreach($view->result as $delta => $row) {
       // @todo incorrect value is rendered - int instead of string.
       $view->result[$delta]->modules_checklist_log_type = modules_checklist_log_get_type_label($view->result[$delta]->modules_checklist_log_type);
     }
