@@ -15,7 +15,7 @@ define('MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED', 4);
  * Implements hook_help().
  */
 function modules_checklist_log_help($path, $arg) {
-
+  dpm(modules_checklist_log_get_usernames());
 }
 
 /**
@@ -135,6 +135,29 @@ function modules_checklist_log_modules_uninstalled($modules) {
 }
 
 /**
+ * Implements hook_views_pre_render().
+ */
+function modules_checklist_log_views_pre_render(&$view) {
+  if ($view->name == 'modules_checklist_log') {
+    $modules_data = system_rebuild_module_data();
+
+    foreach($view->result as $delta => $row) {
+      $module_machine_name = $row->modules_checklist_log_module_name;
+
+      if (isset($modules_data[$module_machine_name]->info['name'])) {
+        $view->result[$delta]->modules_checklist_log_module_name = $modules_data[$module_machine_name]->info['name'];
+      }
+      else {
+        $view->result[$delta]->modules_checklist_log_module_name = $module_machine_name . ' [' . t('uninstall') . ']';
+      }
+
+      // @todo incorrect value is rendered - int instead of string.
+      $view->result[$delta]->modules_checklist_log_type = modules_checklist_log_get_type_label($view->result[$delta]->modules_checklist_log_type);
+    }
+  }
+}
+
+/**
  * Saves modules_checklist_log_entry entity to the DB.
  *
  * @param $module_name
@@ -152,4 +175,91 @@ function modules_checklist_log_save($module_name, $type) {
     )
   );
   entity_save('modules_checklist_log_entry', $modules_checklist_log_entry);
+}
+
+/**
+ * Returns array of unique modules from the Module Checklist log.
+ *
+ * @return array
+ */
+function modules_checklist_log_get_module_names() {
+  $module_names = array();
+  $modules_data = system_rebuild_module_data();
+  $result = db_query('SELECT DISTINCT(mcl.module_name) FROM {modules_checklist_log} mcl ORDER BY mcl.module_name')->fetchAll();
+
+  foreach ($result as $item) {
+    $module_names[$item->module_name] = $modules_data[$item->module_name]->info['name'];
+  }
+
+  return $module_names;
+}
+
+/**
+ * Returns array of unique types from the Module Checklist log.
+ *
+ * @return array
+ */
+function modules_checklist_log_get_types() {
+  $types = array();
+  $result = db_query('SELECT DISTINCT(mcl.type) FROM {modules_checklist_log} mcl ORDER BY mcl.type')->fetchAll();
+
+  foreach ($result as $item) {
+    $type_label = modules_checklist_log_get_type_label($item->type);
+
+    if (!empty($type_label)) {
+      $types[$item->type] = $type_label;
+    }
+  }
+
+  return $types;
+}
+
+/**
+ * Returns array of unique usernames from the Module Checklist log.
+ *
+ * @return array
+ */
+function modules_checklist_log_get_usernames() {
+  $users = array();
+
+  $query = db_select('modules_checklist_log', 'mcl');
+  $query->leftJoin('users', 'u', 'mcl.uid = u.uid');
+  $query->fields('u', array('uid', 'name'));
+
+  $result = $query->execute()->fetchAll();
+
+  foreach ($result as $item) {
+    $users[$item->uid] = $item->name;
+  }
+
+  return $users;
+}
+
+/**
+ * Return human readable label for the event of the given type.
+ *
+ * @param int $type
+ *
+ * @return string
+ */
+function modules_checklist_log_get_type_label($type) {
+  switch ($type) {
+    case MODULES_CHECKLIST_LOG_TYPE_INSTALLED:
+      $label = t('installed');
+      break;
+    case MODULES_CHECKLIST_LOG_TYPE_ENABLED:
+      $label = t('enabled');
+      break;
+    case MODULES_CHECKLIST_LOG_TYPE_DISABLED:
+      $label = t('disabled');
+      break;
+    case MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED:
+      $label = t('uninstalled');
+      break;
+    default:
+      // Unknown type.
+      $label = '';
+  }
+
+  return $label;
 }
