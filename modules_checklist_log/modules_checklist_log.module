@@ -5,6 +5,10 @@
  * modules_checklist_log.module.
  */
 
+// Defines the ststus of log rotation by default.
+define('MODULES_CHECKLIST_LOG_DEFAULT_ROTATION_STATUS', 0);
+// Defines number of days to keep log entries by default.
+define('MODULES_CHECKLIST_LOG_DEFAULT_ROTATION_PERIOD', 7);
 // Defines types of events that module records.
 define('MODULES_CHECKLIST_LOG_TYPE_INSTALLED', 1);
 define('MODULES_CHECKLIST_LOG_TYPE_ENABLED', 2);
@@ -27,6 +31,10 @@ function modules_checklist_log_permission() {
       'title' => t('View Modules Checklist Log'),
       'description' => t('Access and view Modules Checklist Log.'),
     ),
+    'configure modules_checklist settings' => array(
+      'title' => t('Configure Modules Checklist Settings'),
+      'description' => t('Access and configure Modules Checklist Settings.'),
+    ),
   );
 }
 
@@ -35,14 +43,35 @@ function modules_checklist_log_permission() {
  */
 function modules_checklist_log_menu() {
   return array(
-    'admin/reports/modules_checklist_log' => array(
-      'title' => 'Modules Checklist Log',
-      'description' => 'Records modules_checklist events to log and provides administration UI for browsing events.',
-      'page callback' => 'modules_checklist_log_page',
-      'access arguments' => array('access modules_checklist log'),
-      'file' => 'modules_checklist_log.page.inc',
-    ),
+    'admin/config/development/modules_checklist_log_settings' => array(
+      'title' => 'Modules Checklist settings',
+      'description' => 'Modules Checklist settings and configuration.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('modules_checklist_log_settings_form'),
+      'access arguments' => array('configure modules_checklist settings'),
+      'file' => 'modules_checklist_log.admin.inc',
+    )
   );
+}
+
+/**
+ * Implements hook_cron().
+ */
+function modules_checklist_log_cron() {
+  $rotation_status = variable_get('modules_checklist_log_rotation_enabled', MODULES_CHECKLIST_LOG_DEFAULT_ROTATION_STATUS);
+
+  if ($rotation_status) {
+    $rotation_period = variable_get('modules_checklist_log_rotation_period', MODULES_CHECKLIST_LOG_DEFAULT_ROTATION_PERIOD);
+
+    if ($rotation_period) {
+      $rotation_period = 86400 * $rotation_period;
+
+      // Delete records which are older than {$rotation_period} days.
+      db_delete('modules_checklist_log')
+        ->condition('timestamp', REQUEST_TIME - $rotation_period, '<')
+        ->execute();
+    }
+  }
 }
 
 /**
@@ -111,6 +140,10 @@ function modules_checklist_log_entity_property_info() {
  * Implements hook_views_data_alter().
  */
 function modules_checklist_log_views_data_alter(&$data) {
+  // @todo implement Views field handler in v.7x-1.1 instead.
+  $data['modules_checklist_log']['type']['field']['handler'] = 'views_handler_field';
+  unset($data['modules_checklist_log']['type']['field']['float']);
+
   // Exposes uid as a relationship to users.
   $data['modules_checklist_log']['author_info'] = array(
     'title' => t('User information.'),
@@ -171,24 +204,47 @@ function modules_checklist_log_views_pre_render(&$view) {
     foreach($view->result as $delta => $row) {
       $module_machine_name = $row->modules_checklist_log_module_name;
 
+      // @todo implement Views field handler in v.7x-1.1 instead.
       if (isset($modules_data[$module_machine_name]->info['name'])) {
         $view->result[$delta]->modules_checklist_log_module_name = $modules_data[$module_machine_name]->info['name'];
       }
       else {
-        $view->result[$delta]->modules_checklist_log_module_name = $module_machine_name . ' [' . t('uninstalled and deleted') . ']';
+        $view->result[$delta]->modules_checklist_log_module_name = modules_checklist_get_uninstalled_and_deleted_label($module_machine_name);
       }
+
+      // @todo implement Views field handler in v.7x-1.1 instead.
+      $view->result[$delta]->modules_checklist_log_type = modules_checklist_log_get_type_label($view->result[$delta]->modules_checklist_log_type);
     }
   }
 }
 
 /**
- * Implements hook_views_post_render().
+ * Implements hook_form_alter().
  */
-function modules_checklist_log_views_post_render(&$view, &$output, &$cache) {
-  if ($view->name == 'modules_checklist_log') {
-    foreach($view->result as $delta => $row) {
-      // @todo incorrect value is rendered - int instead of string.
-      $view->result[$delta]->modules_checklist_log_type = modules_checklist_log_get_type_label($view->result[$delta]->modules_checklist_log_type);
+function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'views_exposed_form') {
+    if ($form_state['view']->name == 'modules_checklist_log') {
+      // Transforms Views default module_name textfield to the user-friendly select list.
+      $form['module_name']['#type'] = 'select';
+      $form['module_name']['#options'] = modules_checklist_log_get_module_names();
+      $form['module_name']['#empty_option'] = ' - ' . t('None') . ' - ';
+      $form['module_name']['#empty_value'] = '';
+      unset($form['module_name']['#size']);
+
+      // Transforms Views default status textfield to the user-friendly select list.
+      $form['type']['#type'] = 'select';
+      $form['type']['#options'] = modules_checklist_log_get_types();
+      $form['type']['#empty_option'] = ' - ' . t('None') . ' - ';
+      $form['type']['#empty_value'] = '';
+      unset($form['type']['#size']);
+
+      // Transforms Views default uid textfield to the user-friendly select list.
+      $form['uid']['#type'] = 'select';
+      $form['uid']['#options'] = modules_checklist_log_get_usernames();
+      $form['uid']['#empty_option'] = ' - ' . t('None') . ' - ';
+      $form['uid']['#empty_value'] = '';
+      unset($form['uid']['#autocomplete_path']);
+      unset($form['uid']['#description']);
     }
   }
 }
@@ -224,7 +280,12 @@ function modules_checklist_log_get_module_names() {
   $result = db_query('SELECT DISTINCT(mcl.module_name) FROM {modules_checklist_log} mcl ORDER BY mcl.module_name')->fetchAll();
 
   foreach ($result as $item) {
-    $module_names[$item->module_name] = $modules_data[$item->module_name]->info['name'];
+    if (isset($modules_data[$item->module_name])) {
+      $module_names[$item->module_name] = $modules_data[$item->module_name]->info['name'];
+    }
+    else {
+      $module_names[$item->module_name] = modules_checklist_get_uninstalled_and_deleted_label($item->module_name);
+    }
   }
 
   return $module_names;
@@ -293,7 +354,7 @@ function modules_checklist_log_get_type_label($type) {
       $label = t('uninstalled');
       break;
     default:
-      // Unknown type.
+      // Unknown module status.
       $label = '';
   }
 
