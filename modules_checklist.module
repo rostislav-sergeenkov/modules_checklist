@@ -5,28 +5,67 @@
  * modules_checklist.module.
  */
 
+// @todo ==== RELEASE 7x-1.1. Focus on functionality.
+// -- major functionality --
+// @todo add variable 'modules_checklist_required_modules'.
+// @todo print drupal_set_message() on all pages of the site if the list modules doesn't match the config.
+// @todo test log entry when using Drush.
+// @todo implement periodic check of systems table to ensure that entry for the manually enabled in DB modules is present in the log. Check if this logic works.
+// @todo implement protection: write into watchdog and variable on disabling the module, extract data from watchdog and variable on enabling.
+
+// -- sub-module --
+// @todo fix filters by Date.
+// @todo highlight rows in the table according to the priority of modules (required, optional etc).
+
+// -- admin UI --
 // @todo create textarea where user can just copy the array of modules and insert it in settings.php. Use format machine name - human name.
 // @todo add link to that file on the status report page. Also display a diff with existing modules there.
-// @todo implement same logic for optional modules.
-// @todo create Views based sub-module that provides admin log with filters for tracking enabling/disabling modules.
-// @todo think how to specify correct version for the sub-module.
-// @todo use Entity API and custom schema for log entries.
-// @todo implement protection: write into watchdog and variable on disabling the module, extract data from watchdog and variable on enabling.
-// @todo print drupal_set_message() on all pages of the site if the list modules doesn't match the config.
-// @todo create views display handlers for Module Names and Type (Status).
+// @todo module can be: installed, enabled, disabled, uninstalled, physically removed. Test all 5 situations.
+
+// -- release action items ---
 // @todo update README.txt file
 // @todo implement hook_help() for both modules.
-// @todo implement log rotation.
+// @todo think how to specify correct version for the sub-module.
 // @todo create Project Page and promote the module to the permanent d.org project.
-// @todo test log entry when using Drush.
-// @todo implement periodic check of systems table to ensure that entry for the manually enabled in DB modules is present in the log.
+// @todo demonstrate the module and collect feedback.
 // @todo install the module on Prod sites.
+
+// @todo ==== RELEASE 7x-1.0. Focus on code quality (Views handlers instead of hook_alter, etc).
+// @todo create views field handlers for Module Names and Type (Status). instead of altering for Views fields.
 
 /**
  * Implements hook_help().
  */
 function modules_checklist_help($path, $arg) {
 
+}
+
+/**
+ * Implements hook_permission().
+ */
+function modules_checklist_permission() {
+  return array(
+    'configure modules_checklist settings' => array(
+      'title' => t('Configure Modules Checklist settings'),
+      'description' => t('Access and configure Modules Checklist settings.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function modules_checklist_menu() {
+  return array(
+    'admin/config/development/modules_checklist_settings' => array(
+      'title' => 'Modules Checklist settings',
+      'description' => 'Modules Checklist settings and configuration.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('modules_checklist_settings_form'),
+      'access arguments' => array('configure modules_checklist settings'),
+      'file' => 'modules_checklist.admin.inc',
+    )
+  );
 }
 
 /**
@@ -77,8 +116,7 @@ function modules_checklist_get_module_names($modules) {
       $module_names[$module_machine_name] = $modules_data[$module_machine_name]->info['name'];
     }
     else {
-      $module_names[$module_machine_name] =
-        $module_machine_name . ' [' . t('uninstalled and deleted') . ']';
+      $module_names[$module_machine_name] = modules_checklist_get_uninstalled_and_deleted_label($module_machine_name);
     }
   }
 
@@ -113,4 +151,15 @@ function modules_checklist_get_modules($status) {
   }
 
   return $modules;
+}
+
+/**
+ * Returns label for the module that has been uninstalled and deleted from the system.
+ *
+ * @param $module_machine_name
+ *
+ * @return string
+ */
+function modules_checklist_get_uninstalled_and_deleted_label($module_machine_name) {
+  return $module_machine_name . ' [' . t('uninstalled and deleted') . ']';
 }
