@@ -23,11 +23,14 @@ function hook_views_default_views() {
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'Modules Checklist log';
   $handler->display->display_options['use_more_always'] = FALSE;
-  $handler->display->display_options['access']['type'] = 'none';
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'access modules_checklist log';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['exposed_form']['options']['reset_button'] = TRUE;
   $handler->display->display_options['pager']['type'] = 'full';
   $handler->display->display_options['pager']['options']['items_per_page'] = '50';
   $handler->display->display_options['pager']['options']['offset'] = '0';
@@ -37,6 +40,7 @@ function hook_views_default_views() {
   $handler->display->display_options['style_options']['columns'] = array(
     'module_name' => 'module_name',
     'type' => 'type',
+    'name' => 'name',
     'timestamp' => 'timestamp',
   );
   $handler->display->display_options['style_options']['default'] = 'timestamp';
@@ -49,6 +53,13 @@ function hook_views_default_views() {
       'empty_column' => 0,
     ),
     'type' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'name' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -165,6 +176,10 @@ function hook_views_default_views() {
     2 => array(),
     3 => array(),
   );
+
+  /* Display: Page */
+  $handler = $view->new_display('page', 'Page', 'page_1');
+  $handler->display->display_options['path'] = 'admin/reports/modules_checklist_log';
 
   $export['modules_checklist_log'] = $view;
 
