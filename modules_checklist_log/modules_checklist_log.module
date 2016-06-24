@@ -28,29 +28,9 @@ function modules_checklist_log_help($path, $arg) {
 function modules_checklist_log_permission() {
   return array(
     'access modules_checklist log' => array(
-      'title' => t('View Modules Checklist Log'),
-      'description' => t('Access and view Modules Checklist Log.'),
+      'title' => t('View Modules Checklist log'),
+      'description' => t('Access and view Modules Checklist log.'),
     ),
-    'configure modules_checklist settings' => array(
-      'title' => t('Configure Modules Checklist Settings'),
-      'description' => t('Access and configure Modules Checklist Settings.'),
-    ),
-  );
-}
-
-/**
- * Implements hook_menu().
- */
-function modules_checklist_log_menu() {
-  return array(
-    'admin/config/development/modules_checklist_log_settings' => array(
-      'title' => 'Modules Checklist settings',
-      'description' => 'Modules Checklist settings and configuration.',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('modules_checklist_log_settings_form'),
-      'access arguments' => array('configure modules_checklist settings'),
-      'file' => 'modules_checklist_log.admin.inc',
-    )
   );
 }
 
@@ -80,7 +60,7 @@ function modules_checklist_log_cron() {
 function modules_checklist_log_entity_info() {
   return array(
     'modules_checklist_log_entry' => array(
-      'label' => t('Modules Checklist Log Entry'),
+      'label' => t('Modules Checklist log entry'),
       'entity class' => 'Entity',
       'controller class' => 'EntityAPIController',
       'views controller class' => 'EntityDefaultViewsController',
@@ -246,6 +226,27 @@ function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
       unset($form['uid']['#autocomplete_path']);
       unset($form['uid']['#description']);
     }
+  }
+  else if ($form_id == 'modules_checklist_settings_form') {
+    $form['modules_checklist_log_rotation_enabled'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable log rotation'),
+      '#description' => t('Removes the log entries from the database. Relies on cron run.'),
+      '#default_value' => variable_get('modules_checklist_log_rotation_enabled', MODULES_CHECKLIST_LOG_DEFAULT_ROTATION_STATUS),
+    );
+
+    $form['modules_checklist_log_rotation_period'] = array(
+      '#type' => 'textfield',
+      '#title' => t('How long should log entries be kept?'),
+      '#description' => t('How many days to keep log entries.'),
+      '#element_validate' => array('element_validate_integer_positive'),
+      '#default_value' => variable_get('modules_checklist_log_rotation_period', MODULES_CHECKLIST_LOG_DEFAULT_ROTATION_PERIOD),
+      '#states' => array(
+        'visible' => array(
+          ':input[name=modules_checklist_log_rotation_enabled]' => array('checked' => TRUE),
+        ),
+      ),
+    );
   }
 }
 

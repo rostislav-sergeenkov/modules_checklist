@@ -11,6 +11,11 @@
 function modules_checklist_settings_form() {
   $modules_data = system_rebuild_module_data();
 
+  // @todo check if variable is present in config. Otherwise show message and display it on all the pages. Create function modules_checklist_status_check().
+  $form['modules_checklist_status_check'] = array(
+    '#markup' => '<div class="messages warning">' . t('Save Brand and add entitlements to see entitlements data.') . '</div>',
+  );
+
   $form['modules_checklist'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available modules'),
@@ -57,7 +62,7 @@ function modules_checklist_settings_form_generate_config($form, &$form_state) {
 function modules_checklist_get_modules_config_content($modules) {
   $config_path = conf_path() . '/settings.php';
   $output = '<strong>// ' . t('Copy the code below and paste into !file.', array('!file' => $config_path)) . '</strong><br/>';
-  $output .= 'array(<br/>';
+  $output .= '$conf[' . "'modules_checklist_required_modules'" . '] = array(<br/>';
   $checked_modules = modules_checklist_get_checked_modules($modules);
 
   foreach ($checked_modules as $module_machine_name => $module_name) {

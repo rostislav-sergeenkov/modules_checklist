@@ -1,7 +1,10 @@
-name = Modules Checklist Log
+name = Modules Checklist log
 description = Records modules_checklist events to log and provides administration UI for browsing events.
 core = 7.x
+configure = admin/config/development/modules_checklist_settings
+package = Modules Checklist
 dependencies[] = ctools
 dependencies[] = entity
 dependencies[] = views
 dependencies[] = views_ui
+dependencies[] = modules_checklist
