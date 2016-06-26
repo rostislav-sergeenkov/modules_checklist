@@ -52,10 +52,13 @@ function modules_checklist_requirements($phase) {
       }
 
       if (!empty($status['optional_modules'])) {
-        $message[] = t('Optional modules are enabled: !optional_modules. Please !disable them.',
+        $message[] = t('Optional modules are enabled: !optional_modules. Please !disable them or !include in a list of modules defined in !file.',
           array(
+            '!file' => $config_path,
             '!disable' => l('disable', 'admin/modules'),
             '!optional_modules' => implode(', ', $status['optional_modules']),
+            '!include' => user_access('configure modules_checklist settings') ?
+              l(t('include'), 'admin/config/development/modules_checklist_settings') : 'include',
           )
         );
       }

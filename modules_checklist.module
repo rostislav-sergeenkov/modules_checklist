@@ -7,7 +7,6 @@
 
 // @todo ==== RELEASE 7x-1.1. Focus on functionality.
 // -- major functionality --
-// @todo add variable 'modules_checklist_required_modules'.
 // @todo print drupal_set_message() on all pages of the site if the list modules doesn't match the config.
 // @todo test log entry when using Drush.
 // @todo implement periodic check of systems table to ensure that entry for the manually enabled in DB modules is present in the log. Check if this logic works.
@@ -15,12 +14,10 @@
 
 // -- sub-module --
 // @todo fix filters by Date.
-// @todo highlight rows in the table according to the priority of modules (required, optional etc).
 // @todo the best practice is to go through and add t() to all title and label strings, with the exception of menu strings.
 
 // -- admin UI --
-// @todo create textarea where user can just copy the array of modules and insert it in settings.php. Use format machine name - human name.
-// @todo add link to that file on the status report page. Also display a diff with existing modules there.
+// @todo on the status report page display a diff with existing modules there.
 // @todo module can be: installed, enabled, disabled, uninstalled, physically removed. Test all 5 situations.
 
 // -- release action items ---
@@ -31,7 +28,9 @@
 // @todo demonstrate the module and collect feedback.
 // @todo install the module on Prod sites.
 
-// @todo ==== RELEASE 7x-1.0. Focus on code quality (Views handlers instead of hook_alter, etc).
+// @todo ==== RELEASE 7x-1.0. Focus on code quality (Views handlers instead of hook_alter, etc) and usability.
+// @todo create include 'all enabled modules' checkbox.
+// @todo highlight rows in the table according to the priority of modules (required, optional etc).
 // @todo create views field handlers for Module Names and Type (Status). instead of altering for Views fields.
 // @todo output Available modules as table, add check all checkbox.
 

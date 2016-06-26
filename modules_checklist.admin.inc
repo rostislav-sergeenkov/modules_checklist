@@ -9,7 +9,7 @@
  * Builds settings form for Modules Checklist log module.
  */
 function modules_checklist_settings_form() {
-  $module_configured = variable_get('modules_checklist_required_modules');
+  $required_modules = variable_get('modules_checklist_required_modules');
   $modules_data = system_rebuild_module_data();
   $config_path = conf_path() . '/settings.php';
   $generate_button_text = 'Generate';
@@ -19,12 +19,29 @@ function modules_checklist_settings_form() {
     'The module detects the list of modules and starts tracking if they are enabled or disabled.',
   );
 
-  // @todo also check if any of required modules where physically removed. And display warning for such case and recommend to regenerate the list.
-  if ($module_configured) {
-    $check = array(
-      'status' => 'status',
-      'message' => t('List of required modules is found in !file file.', array('!file' => $config_path)),
-    );
+  if (is_array($required_modules)) {
+    $non_existent_modules = array_diff($required_modules, array_keys($modules_data));
+
+    if (empty($non_existent_modules)) {
+      // Either all modules from the list are available in the system.
+      $check = array(
+        'status' => 'status',
+        'message' => t('List of required modules is found in !file file.', array('!file' => $config_path)),
+      );
+    }
+    else {
+      // Or some of them have been physically removed from the file system.
+      $check = array(
+        'status' => 'warning',
+        'message' => t('Your !file file contains modules that no longer exist in the system: !modules.<br /> Please click on "!button" button to skip non-existent modules and generate new list of modules.',
+          array(
+            '!file' => $config_path,
+            '!modules' => implode(', ', $non_existent_modules),
+            '!button' => $generate_button_text,
+          )
+        )
+      );
+    }
   }
   else {
     $check = array(
@@ -33,7 +50,6 @@ function modules_checklist_settings_form() {
     );
   }
 
-  // @todo check if variable is present in config. Otherwise show message and display it on all the pages. Create function modules_checklist_status_check().
   $form['modules_checklist_status_check'] = array(
     '#markup' => '<div class="messages ' . $check['status'] . '">' . $check['message'] . '</div>',
   );
@@ -53,7 +69,7 @@ function modules_checklist_settings_form() {
     $form['modules_checklist'][$module_machine_name] = array(
       '#type' => 'checkbox',
       '#title' => $prefix . ' <strong>' . $module->info['name'] . '</strong> [' . $module_machine_name . ']',
-      '#default_value' => is_array($module_configured) && in_array($module_machine_name, $module_configured),
+      '#default_value' => is_array($required_modules) && in_array($module_machine_name, $required_modules),
     );
   }
 
