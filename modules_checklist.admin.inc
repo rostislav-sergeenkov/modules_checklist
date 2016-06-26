@@ -12,12 +12,13 @@ function modules_checklist_settings_form() {
   $required_modules = variable_get('modules_checklist_required_modules');
   $modules_data = system_rebuild_module_data();
   $config_path = conf_path() . '/settings.php';
-  $generate_button_text = 'Generate';
-  $check = modules_checklist_status_check($modules_data, $config_path, $generate_button_text);
+  $check = modules_checklist_status_check($modules_data, $config_path);
 
-  $form['modules_checklist_status_check'] = array(
-    '#markup' => '<div class="messages ' . $check['status'] . '">' . $check['message'] . '</div>',
-  );
+  if ($check['status'] == 'status') {
+    $form['modules_checklist_status_check'] = array(
+      '#markup' => '<div class="messages ' . $check['status'] . '">' . $check['message'] . '</div>',
+    );
+  }
 
   $form['modules_checklist'] = array(
     '#type' => 'fieldset',
@@ -40,7 +41,7 @@ function modules_checklist_settings_form() {
 
   $form['generate'] = array(
     '#type' => 'submit',
-    '#value' => t($generate_button_text),
+    '#value' => t(MODULE_CHECKLIST_GENERATE_BUTTON_TEXT),
     '#submit' => array('modules_checklist_settings_form_generate_config'),
   );
 
@@ -66,7 +67,7 @@ function modules_checklist_settings_form_generate_config($form, &$form_state) {
  */
 function modules_checklist_get_modules_config_content($modules) {
   $config_path = conf_path() . '/settings.php';
-  $output = '<strong>// ' . t('Modules Checklist. Copy the code below and paste into !file file.', array('!file' => $config_path)) . '</strong><br/>';
+  $output = '<strong>// ' . t('Modules Checklist. Copy the code below and paste it into !file file.', array('!file' => $config_path)) . '</strong><br/>';
   $output .= '$conf[' . "'modules_checklist_required_modules'" . '] = array(<br/>';
   $checked_modules = modules_checklist_get_checked_modules($modules);
 
