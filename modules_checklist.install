@@ -11,7 +11,7 @@
 function modules_checklist_requirements($phase) {
   $requirements = array();
 
-  if ('runtime' == $phase) {
+  if ($phase == 'runtime') {
     $status = modules_checklist_get_modules_status();
     $config_path = conf_path() . '/settings.php';
 

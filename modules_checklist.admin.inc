@@ -13,42 +13,7 @@ function modules_checklist_settings_form() {
   $modules_data = system_rebuild_module_data();
   $config_path = conf_path() . '/settings.php';
   $generate_button_text = 'Generate';
-  $message = array(
-    'Select modules you wish to track and click "!button" button.',
-    'Then copy the message and paste it into !file file.',
-    'The module detects the list of modules and starts tracking if they are enabled or disabled.',
-  );
-
-  if (is_array($required_modules)) {
-    $non_existent_modules = array_diff($required_modules, array_keys($modules_data));
-
-    if (empty($non_existent_modules)) {
-      // Either all modules from the list are available in the system.
-      $check = array(
-        'status' => 'status',
-        'message' => t('List of required modules is found in !file file.', array('!file' => $config_path)),
-      );
-    }
-    else {
-      // Or some of them have been physically removed from the file system.
-      $check = array(
-        'status' => 'warning',
-        'message' => t('Your !file file contains modules that no longer exist in the system: !modules.<br /> Please click on "!button" button to skip non-existent modules and generate new list of modules.',
-          array(
-            '!file' => $config_path,
-            '!modules' => implode(', ', $non_existent_modules),
-            '!button' => $generate_button_text,
-          )
-        )
-      );
-    }
-  }
-  else {
-    $check = array(
-      'status' => 'error',
-      'message' => t(implode($message, '<br />'), array('!button' => $generate_button_text, '!file' => $config_path)),
-    );
-  }
+  $check = modules_checklist_status_check($modules_data, $config_path, $generate_button_text);
 
   $form['modules_checklist_status_check'] = array(
     '#markup' => '<div class="messages ' . $check['status'] . '">' . $check['message'] . '</div>',

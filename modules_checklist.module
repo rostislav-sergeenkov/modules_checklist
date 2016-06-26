@@ -17,8 +17,11 @@
 // @todo the best practice is to go through and add t() to all title and label strings, with the exception of menu strings.
 
 // -- admin UI --
-// @todo on the status report page display a diff with existing modules there.
+// @todo on the status report page display status check. Use modules_checklist_status_check() for that.
 // @todo module can be: installed, enabled, disabled, uninstalled, physically removed. Test all 5 situations.
+
+// -- minor fixes --
+// @todo define a constant for the text for 'Generate' button.
 
 // -- release action items ---
 // @todo update README.txt file
@@ -33,6 +36,7 @@
 // @todo highlight rows in the table according to the priority of modules (required, optional etc).
 // @todo create views field handlers for Module Names and Type (Status). instead of altering for Views fields.
 // @todo output Available modules as table, add check all checkbox.
+// @todo add email notification if required module is disabled.
 
 /**
  * Implements hook_help().
@@ -67,6 +71,85 @@ function modules_checklist_menu() {
       'file' => 'modules_checklist.admin.inc',
     )
   );
+}
+
+/**
+ * Implements hook_init().
+ */
+function modules_checklist_init() {
+  if (user_access('configure modules_checklist settings')) {
+    $modules_data = system_rebuild_module_data();
+    $config_path = conf_path() . '/settings.php';
+    $button_text = 'Generate';
+    $check_status = modules_checklist_status_check($modules_data, $config_path, $button_text);
+
+    if (in_array($check_status['status'], array('warning', 'error'))) {
+      $prefix = t('Please !configure Modules Checklist module.',
+        array(
+          '!configure' => l(t('configure'), 'admin/config/development/modules_checklist_settings'),
+        )
+      );
+      $message = $prefix . '<br />' . $check_status['message'];
+      drupal_set_message($message, $check_status['status']);
+    }
+  }
+}
+
+/**
+ * Return status information.
+ *
+ * @param array $modules_data
+ * @param string $config_path
+ * @param string $button_text
+ *
+ * @return array
+ */
+function modules_checklist_status_check($modules_data, $config_path, $button_text) {
+  $required_modules = variable_get('modules_checklist_required_modules');
+
+  if (is_array($required_modules)) {
+    $non_existent_modules = array_diff($required_modules, array_keys($modules_data));
+
+    if (empty($non_existent_modules)) {
+      // Either all modules from the list are available in the system.
+      return array(
+        'status' => 'status',
+        'message' => t('List of required modules is found in !file file.', array('!file' => $config_path)),
+      );
+    }
+    else {
+      // Or some of them have been physically removed from the file system.
+      $message = array(
+        'Your !file file contains modules that no longer exist in the system: !modules.',
+        'Please click on "!button" button to skip non-existent modules and generate new list of modules.',
+      );
+      return array(
+        'status' => 'warning',
+        'message' => t(implode($message, '<br />'), array(
+            '!file' => $config_path,
+            '!modules' => implode(', ', $non_existent_modules),
+            '!button' => $button_text,
+          )
+        ),
+      );
+    }
+  }
+  else {
+    $message = array(
+      'Select modules you wish to track and click "!button" button.',
+      'Then copy the message and paste it into !file file.',
+      'The module detects the list of modules and starts tracking if they are enabled or disabled.',
+    );
+
+    return array(
+      'status' => 'error',
+      'message' => t(implode($message, '<br />'), array(
+        '!button' => $button_text,
+        '!file' => $config_path,
+        )
+      ),
+    );
+  }
 }
 
 /**
