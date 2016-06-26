@@ -5,14 +5,10 @@
  * modules_checklist.module.
  */
 
-// ==== RELEASE 7x-1.1. Focus on functionality.
+// ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
 // @todo test log entry when using Drush.
 // @todo implement protection: write into watchdog and variable on disabling the module, extract data from watchdog and variable on enabling.
-
-// -- sub-module --
-// @todo fix or remove filters by Date.
-// @todo the best practice is to go through and add t() to all title and label strings, with the exception of menu strings.
 
 // -- admin UI --
 // @todo on the status report page display status check. Use modules_checklist_status_check() for that.
@@ -26,14 +22,14 @@
 // @todo demonstrate the module and collect feedback.
 // @todo install the module on Prod sites.
 
-// ==== RELEASE 7x-1.0. Focus on code quality (Views handlers instead of hook_alter, etc) and usability.
+// ==== RELEASE 7x-1.1. Focus on code quality (Views handlers instead of hook_alter, etc) and usability.
 // @todo create include 'all enabled modules' checkbox.
 // @todo highlight rows in the table according to the priority of modules (required, optional etc).
 // @todo create views field handlers for Module Names and Type (Status). instead of altering for Views fields.
 // @todo output Available modules as table, add check all checkbox.
 // @todo add email notification if required module is disabled.
 // @todo think about periodic check of systems table to ensure that entry for the manually enabled in DB modules is present in the log. Check if this logic works.
-// @todo add filters by Date - use Date popup.
+// @todo add filters by Date - use Date popup. After Views regeneration add t() to all titles and labels.
 
 // Defines text on the "Generate" button.
 define('MODULE_CHECKLIST_GENERATE_BUTTON_TEXT', 'Generate');
