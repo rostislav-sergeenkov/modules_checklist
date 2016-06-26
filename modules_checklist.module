@@ -16,6 +16,7 @@
 // -- sub-module --
 // @todo fix filters by Date.
 // @todo highlight rows in the table according to the priority of modules (required, optional etc).
+// @todo the best practice is to go through and add t() to all title and label strings, with the exception of menu strings.
 
 // -- admin UI --
 // @todo create textarea where user can just copy the array of modules and insert it in settings.php. Use format machine name - human name.
