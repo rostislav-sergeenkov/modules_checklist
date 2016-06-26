@@ -206,15 +206,13 @@ function modules_checklist_log_views_pre_render(&$view) {
     foreach($view->result as $delta => $row) {
       $module_machine_name = $row->modules_checklist_log_module_name;
 
-      // @todo implement Views field handler in v.7x-1.1 instead.
       if (isset($modules_data[$module_machine_name]->info['name'])) {
-        $view->result[$delta]->modules_checklist_log_module_name = $modules_data[$module_machine_name]->info['name'];
+        $view->result[$delta]->modules_checklist_log_module_name = $modules_data[$module_machine_name]->info['name'] . ' [' . $module_machine_name . ']';
       }
       else {
         $view->result[$delta]->modules_checklist_log_module_name = modules_checklist_get_uninstalled_and_deleted_label($module_machine_name);
       }
 
-      // @todo implement Views field handler in v.7x-1.1 instead.
       $view->result[$delta]->modules_checklist_log_type = modules_checklist_log_get_type_label($view->result[$delta]->modules_checklist_log_type);
     }
   }
