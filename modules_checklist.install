@@ -20,6 +20,14 @@ function modules_checklist_requirements($phase) {
       $severity = REQUIREMENT_ERROR;
       $value = t('The list of required modules is not defined in !file.',
         array('!file' => $config_path));
+
+      if (user_access('configure modules_checklist settings')) {
+        $value .= t('List of required modules can be generated on the !page.',
+          array(
+            '!page' => l(t('Modules Checklist settings page'), 'admin/config/development/modules_checklist_settings'),
+            )
+        );
+      }
     }
     elseif (empty($status['optional_modules']) && empty($status['missing_modules'])) {
       $severity = REQUIREMENT_OK;

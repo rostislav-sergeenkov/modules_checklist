@@ -9,11 +9,33 @@
  * Builds settings form for Modules Checklist log module.
  */
 function modules_checklist_settings_form() {
+  $module_configured = variable_get('modules_checklist_required_modules');
   $modules_data = system_rebuild_module_data();
+  $config_path = conf_path() . '/settings.php';
+  $generate_button_text = 'Generate';
+  $message = array(
+    'Select modules you wish to track and click "!button" button.',
+    'Then copy the message and paste it into !file file.',
+    'The module detects the list of modules and starts tracking if they are enabled or disabled.',
+  );
+
+  // @todo also check if any of required modules where physically removed. And display warning for such case and recommend to regenerate the list.
+  if ($module_configured) {
+    $check = array(
+      'status' => 'status',
+      'message' => t('List of required modules is found in !file file.', array('!file' => $config_path)),
+    );
+  }
+  else {
+    $check = array(
+      'status' => 'error',
+      'message' => t(implode($message, '<br />'), array('!button' => $generate_button_text, '!file' => $config_path)),
+    );
+  }
 
   // @todo check if variable is present in config. Otherwise show message and display it on all the pages. Create function modules_checklist_status_check().
   $form['modules_checklist_status_check'] = array(
-    '#markup' => '<div class="messages warning">' . t('Save Brand and add entitlements to see entitlements data.') . '</div>',
+    '#markup' => '<div class="messages ' . $check['status'] . '">' . $check['message'] . '</div>',
   );
 
   $form['modules_checklist'] = array(
@@ -25,17 +47,19 @@ function modules_checklist_settings_form() {
   );
 
   foreach ($modules_data as $module_machine_name => $module) {
+    $prefix = $module->status ?
+      '<em class="enabled">' . t('enabled') . '</em>' : '<em class="disabled">' . t('disabled') . '</em>';
+
     $form['modules_checklist'][$module_machine_name] = array(
       '#type' => 'checkbox',
-      '#title' => $module->info['name'],
-      // @todo specify default value based on logic: if the module is present in the config - add, otherwise skip.
-      // '#default_value' => 0,
+      '#title' => $prefix . ' <strong>' . $module->info['name'] . '</strong> [' . $module_machine_name . ']',
+      '#default_value' => is_array($module_configured) && in_array($module_machine_name, $module_configured),
     );
   }
 
   $form['generate'] = array(
     '#type' => 'submit',
-    '#value' => t('Generate'),
+    '#value' => t($generate_button_text),
     '#submit' => array('modules_checklist_settings_form_generate_config'),
   );
 
@@ -61,13 +85,13 @@ function modules_checklist_settings_form_generate_config($form, &$form_state) {
  */
 function modules_checklist_get_modules_config_content($modules) {
   $config_path = conf_path() . '/settings.php';
-  $output = '<strong>// ' . t('Copy the code below and paste into !file.', array('!file' => $config_path)) . '</strong><br/>';
+  $output = '<strong>// ' . t('Modules Checklist. Copy the code below and paste into !file file.', array('!file' => $config_path)) . '</strong><br/>';
   $output .= '$conf[' . "'modules_checklist_required_modules'" . '] = array(<br/>';
   $checked_modules = modules_checklist_get_checked_modules($modules);
 
   foreach ($checked_modules as $module_machine_name => $module_name) {
     $output .= '&#160;&#160;// "' . $module_name . '".<br/>';
-    $output .= '&#160;&#160;' . $module_machine_name . ',<br/>';
+    $output .= "&#160;&#160;'" . $module_machine_name . "',<br/>";
   }
 
   $output .= ');';

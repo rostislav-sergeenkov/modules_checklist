@@ -33,6 +33,7 @@
 
 // @todo ==== RELEASE 7x-1.0. Focus on code quality (Views handlers instead of hook_alter, etc).
 // @todo create views field handlers for Module Names and Type (Status). instead of altering for Views fields.
+// @todo output Available modules as table, add check all checkbox.
 
 /**
  * Implements hook_help().
@@ -136,11 +137,14 @@ function modules_checklist_get_modules($status) {
   switch ($status) {
     case 'enabled':
       $modules = array_keys(module_list());
+      break;
     case 'required':
       $modules = variable_get('modules_checklist_required_modules', array());
+      break;
       // @todo implement logic for optional modules.
     case 'optional':
       $modules = variable_get('modules_checklist_optional_modules', array());
+      break;
     default:
       $modules = array();
   }
