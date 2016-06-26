@@ -35,6 +35,21 @@ function modules_checklist_log_permission() {
 }
 
 /**
+ * Implements hook_menu().
+ */
+function modules_checklist_log_menu() {
+  return array(
+    'admin/reports/modules_checklist_log' => array(
+      'title' => 'Modules Checklist log',
+      'description' => 'Administration UI for browsing modules_checklist events.',
+      'page callback' => 'modules_checklist_log_page',
+      'access arguments' => array('access modules_checklist log'),
+      'file' => 'modules_checklist_log.page.inc',
+    )
+  );
+}
+
+/**
  * Implements hook_cron().
  */
 function modules_checklist_log_cron() {
@@ -114,6 +129,13 @@ function modules_checklist_log_entity_property_info() {
   $info['modules_checklist_log_entry']['properties'] = $properties;
 
   return $info;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function modules_checklist_log_views_api() {
+  return array('api' => 3);
 }
 
 /**
@@ -225,6 +247,8 @@ function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
       $form['uid']['#empty_value'] = '';
       unset($form['uid']['#autocomplete_path']);
       unset($form['uid']['#description']);
+
+      $form['#attached']['css'][] = drupal_get_path('module', 'modules_checklist_log') . '/modules_checklist_log.css';
     }
   }
   else if ($form_id == 'modules_checklist_settings_form') {

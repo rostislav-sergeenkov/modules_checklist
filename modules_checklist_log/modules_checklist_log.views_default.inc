@@ -8,7 +8,7 @@
 /**
  * Implements hook_views_default_views().
  */
-function hook_views_default_views() {
+function modules_checklist_log_views_default_views() {
   $export = array();
 
   $view = new view();
