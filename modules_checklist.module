@@ -127,7 +127,7 @@ function modules_checklist_get_module_names($modules) {
 /**
  * Returns array of human readable names of modules according to their status.
  *
- * @param $status
+ * @param string $status
  * @todo document possible $type
  *
  * @return array|null
@@ -157,7 +157,7 @@ function modules_checklist_get_modules($status) {
 /**
  * Returns label for the module that has been uninstalled and deleted from the system.
  *
- * @param $module_machine_name
+ * @param string $module_machine_name
  *
  * @return string
  */
