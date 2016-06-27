@@ -8,8 +8,7 @@
 // ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
 // @todo test log entry using Drush.
-// @todo implement protection: write into watchdog and variable/DB table on disabling the module, extract data from watchdog and variable on enabling.
-// @todo dump backup file in file system. TBD.
+// @todo dump backup file in file system on hook_disable/unistall and restore on install/enable. TBD.
 // @todo on the status report page display status check. Use modules_checklist_status_check() for that.
 // @todo module can be: installed, enabled, disabled, uninstalled, physically removed. Test all 5 situations.
 

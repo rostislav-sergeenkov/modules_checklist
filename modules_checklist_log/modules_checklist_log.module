@@ -286,25 +286,29 @@ function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Saves modules_checklist_log_entry entity to the DB.
+ * Saves modules_checklist_log_entry entity to the DB or variable.
  *
- * @param $module_name
- * @param $type
+ * @param string $module_name
+ * @param string $type
+ * @param bool $save_to_db
  */
-function modules_checklist_log_save($module_name, $type) {
+function modules_checklist_log_save($module_name, $type, $save_to_db = TRUE) {
   global $user;
-
-  $modules_checklist_log_entry = entity_create(
-    'modules_checklist_log_entry', array(
-      'module_name' => $module_name,
-      'uid' => $user->uid,
-      'ip' => $user->hostname,
-      'type' => $type,
-      'timestamp' => REQUEST_TIME,
-    )
+  $log_entry = array(
+    'module_name' => $module_name,
+    'uid' => $user->uid,
+    'ip' => $user->hostname,
+    'type' => $type,
+    'timestamp' => REQUEST_TIME,
   );
 
-  entity_save('modules_checklist_log_entry', $modules_checklist_log_entry);
+  if ($save_to_db) {
+    $modules_checklist_log_entry = entity_create('modules_checklist_log_entry', $log_entry);
+    entity_save('modules_checklist_log_entry', $modules_checklist_log_entry);
+  }
+  else {
+    variable_set('modules_checklist_log_status_' . $type, $log_entry);
+  }
 }
 
 /**
