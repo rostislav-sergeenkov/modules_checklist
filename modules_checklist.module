@@ -7,8 +7,9 @@
 
 // ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
-// @todo test log entry when using Drush.
-// @todo implement protection: write into watchdog and variable on disabling the module, extract data from watchdog and variable on enabling.
+// @todo test log entry using Drush.
+// @todo implement protection: write into watchdog and variable/DB table on disabling the module, extract data from watchdog and variable on enabling.
+// @todo dump backup file in file system. TBD.
 // @todo on the status report page display status check. Use modules_checklist_status_check() for that.
 // @todo module can be: installed, enabled, disabled, uninstalled, physically removed. Test all 5 situations.
 
@@ -25,7 +26,7 @@
 // @todo highlight rows in the table according to the priority of modules (required, optional etc).
 // @todo create views field handlers for Module Names and Type (Status). instead of altering for Views fields in modules_checklist_log_views_pre_render().
 // @todo output Available modules as table, add check all checkbox.
-// @todo add email notification if required module is disabled.
+// @todo add email notification if required module is disabled and on module uninstall.
 // @todo think about periodic check of systems table to ensure that entry for the manually enabled in DB modules is present in the log. Check if this logic works.
 // @todo add filters by Date - use Date popup. After Views regeneration add t() to all titles and labels.
 

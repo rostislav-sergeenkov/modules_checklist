@@ -66,6 +66,13 @@ function modules_checklist_log_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'ip' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'timestamp' => array(
       'sortable' => 1,
       'default_sort_order' => 'desc',
@@ -96,6 +103,11 @@ function modules_checklist_log_views_default_views() {
   $handler->display->display_options['fields']['type']['table'] = 'modules_checklist_log';
   $handler->display->display_options['fields']['type']['field'] = 'type';
   $handler->display->display_options['fields']['type']['element_label_colon'] = FALSE;
+  /* Field: Modules Checklist Log Entry: IP address */
+  $handler->display->display_options['fields']['ip']['id'] = 'ip';
+  $handler->display->display_options['fields']['ip']['table'] = 'modules_checklist_log';
+  $handler->display->display_options['fields']['ip']['field'] = 'ip';
+  $handler->display->display_options['fields']['ip']['element_label_colon'] = FALSE;
   /* Field: User: Name */
   $handler->display->display_options['fields']['name']['id'] = 'name';
   $handler->display->display_options['fields']['name']['table'] = 'users';
@@ -150,6 +162,20 @@ function modules_checklist_log_views_default_views() {
   $handler->display->display_options['filters']['uid']['expose']['operator'] = 'uid_op';
   $handler->display->display_options['filters']['uid']['expose']['identifier'] = 'uid';
   $handler->display->display_options['filters']['uid']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+  );
+  /* Filter criterion: IP address */
+  $handler->display->display_options['filters']['ip']['id'] = 'ip';
+  $handler->display->display_options['filters']['ip']['table'] = 'modules_checklist_log';
+  $handler->display->display_options['filters']['ip']['field'] = 'ip';
+  $handler->display->display_options['filters']['ip']['group'] = 1;
+  $handler->display->display_options['filters']['ip']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['ip']['expose']['operator_id'] = 'ip_op';
+  $handler->display->display_options['filters']['ip']['expose']['label'] = t('IP address');
+  $handler->display->display_options['filters']['ip']['expose']['operator'] = 'ip_op';
+  $handler->display->display_options['filters']['ip']['expose']['identifier'] = 'ip';
+  $handler->display->display_options['filters']['ip']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
   );

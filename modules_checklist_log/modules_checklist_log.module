@@ -112,6 +112,12 @@ function modules_checklist_log_entity_property_info() {
       'description' => t('The ID of the user who triggered the event.'),
       'schema field' => 'uid',
     ),
+    'ip' => array(
+      'type' => 'text',
+      'label' => t('IP address'),
+      'description' => 'IP address of the user who triggered the event.',
+      'schema field' => 'ip',
+    ),
     'type' => array(
       'type'  => 'integer',
       'label' => t('Status'),
@@ -224,27 +230,34 @@ function modules_checklist_log_views_pre_render(&$view) {
 function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'views_exposed_form') {
     if ($form_state['view']->name == 'modules_checklist_log') {
-      // Transforms Views default module_name textfield to the user-friendly select list.
+      // Transforms Views default module_name text field to the user-friendly select list.
       $form['module_name']['#type'] = 'select';
       $form['module_name']['#options'] = modules_checklist_log_get_module_names();
       $form['module_name']['#empty_option'] = ' - ' . t('None') . ' - ';
       $form['module_name']['#empty_value'] = '';
       unset($form['module_name']['#size']);
 
-      // Transforms Views default status textfield to the user-friendly select list.
+      // Transforms Views default status text field to the user-friendly select list.
       $form['type']['#type'] = 'select';
       $form['type']['#options'] = modules_checklist_log_get_types();
       $form['type']['#empty_option'] = ' - ' . t('None') . ' - ';
       $form['type']['#empty_value'] = '';
       unset($form['type']['#size']);
 
-      // Transforms Views default uid textfield to the user-friendly select list.
+      // Transforms Views default uid text field to the user-friendly select list.
       $form['uid']['#type'] = 'select';
       $form['uid']['#options'] = modules_checklist_log_get_usernames();
       $form['uid']['#empty_option'] = ' - ' . t('None') . ' - ';
       $form['uid']['#empty_value'] = '';
       unset($form['uid']['#autocomplete_path']);
       unset($form['uid']['#description']);
+
+      // Transforms Views default IP text field to the user-friendly select list.
+      $form['ip']['#type'] = 'select';
+      $form['ip']['#options'] = modules_checklist_log_get_ip();
+      $form['ip']['#empty_option'] = ' - ' . t('None') . ' - ';
+      $form['ip']['#empty_value'] = '';
+      unset($form['ip']['#size']);
 
       $form['#attached']['css'][] = drupal_get_path('module', 'modules_checklist_log') . '/modules_checklist_log.css';
     }
@@ -285,10 +298,12 @@ function modules_checklist_log_save($module_name, $type) {
     'modules_checklist_log_entry', array(
       'module_name' => $module_name,
       'uid' => $user->uid,
+      'ip' => $user->hostname,
       'type' => $type,
       'timestamp' => REQUEST_TIME,
     )
   );
+
   entity_save('modules_checklist_log_entry', $modules_checklist_log_entry);
 }
 
@@ -329,6 +344,22 @@ function modules_checklist_log_get_types() {
     if (!empty($type_label)) {
       $types[$item->type] = $type_label;
     }
+  }
+
+  return $types;
+}
+
+/**
+ * Returns array of unique types from the Module Checklist log.
+ *
+ * @return array
+ */
+function modules_checklist_log_get_ip() {
+  $types = array();
+  $result = db_query('SELECT DISTINCT(mcl.ip) FROM {modules_checklist_log} mcl ORDER BY mcl.ip')->fetchAll();
+
+  foreach ($result as $item) {
+    $types[$item->ip] = $item->ip;
   }
 
   return $types;
