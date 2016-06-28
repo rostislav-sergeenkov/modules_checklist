@@ -9,6 +9,8 @@
 define('MODULES_CHECKLIST_LOG_DEFAULT_ROTATION_STATUS', 0);
 // Defines number of days to keep log entries by default.
 define('MODULES_CHECKLIST_LOG_DEFAULT_ROTATION_PERIOD', 7);
+// Defines the name of the folder in file system for backups.
+define('MODULES_CHECKLIST_LOG_BACKUP_DIR', 'public://modules_checklist_log_backup');
 // Defines types of events that module records.
 define('MODULES_CHECKLIST_LOG_TYPE_INSTALLED', 1);
 define('MODULES_CHECKLIST_LOG_TYPE_ENABLED', 2);
@@ -171,7 +173,7 @@ function modules_checklist_log_views_data_alter(&$data) {
  */
 function modules_checklist_log_modules_installed($modules) {
   foreach ($modules as $module) {
-    modules_checklist_log_save($module, MODULES_CHECKLIST_LOG_TYPE_INSTALLED);
+    modules_checklist_log_save(array('module_name' => $module, 'type' => MODULES_CHECKLIST_LOG_TYPE_INSTALLED));
   }
 }
 
@@ -180,7 +182,7 @@ function modules_checklist_log_modules_installed($modules) {
  */
 function modules_checklist_log_modules_enabled($modules) {
   foreach ($modules as $module) {
-    modules_checklist_log_save($module, MODULES_CHECKLIST_LOG_TYPE_ENABLED);
+    modules_checklist_log_save(array('module_name' => $module, 'type' => MODULES_CHECKLIST_LOG_TYPE_ENABLED));
   }
 }
 
@@ -189,7 +191,7 @@ function modules_checklist_log_modules_enabled($modules) {
  */
 function modules_checklist_log_modules_disabled($modules) {
   foreach ($modules as $module) {
-    modules_checklist_log_save($module, MODULES_CHECKLIST_LOG_TYPE_DISABLED);
+    modules_checklist_log_save(array('module_name' => $module, 'type' => MODULES_CHECKLIST_LOG_TYPE_DISABLED));
   }
 }
 
@@ -198,7 +200,7 @@ function modules_checklist_log_modules_disabled($modules) {
  */
 function modules_checklist_log_modules_uninstalled($modules) {
   foreach ($modules as $module) {
-    modules_checklist_log_save($module, MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED);
+    modules_checklist_log_save(array('module_name' => $module, 'type' => MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED));
   }
 }
 
@@ -286,28 +288,42 @@ function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Saves modules_checklist_log_entry entity to the DB or variable.
+ * Saves modules_checklist_log_entry entity to the specified storages.
  *
- * @param string $module_name
- * @param string $type
- * @param bool $save_to_db
+ * @param array $log_item
+ * @param array $storages
+ *   Supports storage: db, variable, file.
  */
-function modules_checklist_log_save($module_name, $type, $save_to_db = TRUE) {
+function modules_checklist_log_save($log_item, $storage = array('db')) {
   global $user;
+
   $log_entry = array(
-    'module_name' => $module_name,
-    'uid' => $user->uid,
-    'ip' => $user->hostname,
-    'type' => $type,
-    'timestamp' => REQUEST_TIME,
+    'module_name' => !empty($log_item['module_name']) ? $log_item['module_name'] : '',
+    'uid' => !empty($log_item['uid']) ? $log_item['uid'] : $user->uid,
+    'ip' => !empty($log_item['ip']) ? $log_item['ip'] : $user->hostname,
+    'type' => !empty($log_item['type']) ? $log_item['type'] : '',
+    'timestamp' => !empty($log_item['timestamp']) ? $log_item['timestamp'] : REQUEST_TIME,
   );
 
-  if ($save_to_db) {
-    $modules_checklist_log_entry = entity_create('modules_checklist_log_entry', $log_entry);
-    entity_save('modules_checklist_log_entry', $modules_checklist_log_entry);
-  }
-  else {
-    variable_set('modules_checklist_log_status_' . $type, $log_entry);
+  foreach ($storage as $storage_type) {
+    switch ($storage_type) {
+      case 'db':
+        $modules_checklist_log_entry = entity_create('modules_checklist_log_entry', $log_entry);
+        entity_save('modules_checklist_log_entry', $modules_checklist_log_entry);
+        break;
+      case 'variable':
+        variable_set('modules_checklist_log_status_' . $log_entry['type'], $log_entry);
+        break;
+      case 'file':
+        $backup_dir = MODULES_CHECKLIST_LOG_BACKUP_DIR;
+
+        if (file_prepare_directory($backup_dir, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
+          $filename = 'modules_checklist_log_status_' . $log_entry['type'];
+          $file_path = $backup_dir . '/' . $filename;
+          file_unmanaged_save_data(serialize($log_entry), $file_path, FILE_EXISTS_REPLACE);
+        }
+        break;
+    }
   }
 }
 
@@ -417,4 +433,19 @@ function modules_checklist_log_get_type_label($type) {
   }
 
   return $label;
+}
+
+/**
+ * Returns the content of the backup file.
+ *
+ * @param $path
+ *
+ * @return array
+ */
+function modules_checklist_log_get_backup_file_content($path) {
+  $disabled_descriptor = fopen($path, 'r');
+  $result = fread($disabled_descriptor, filesize($path));
+  fclose($disabled_descriptor);
+
+  return unserialize($result);
 }

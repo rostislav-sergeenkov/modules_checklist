@@ -38,13 +38,22 @@ function modules_checklist_log_views_default_views() {
   $handler->display->display_options['pager']['options']['quantity'] = '9';
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
+    'id' => 'id',
     'module_name' => 'module_name',
     'type' => 'type',
     'name' => 'name',
+    'ip' => 'ip',
     'timestamp' => 'timestamp',
   );
-  $handler->display->display_options['style_options']['default'] = 'timestamp';
+  $handler->display->display_options['style_options']['default'] = 'id';
   $handler->display->display_options['style_options']['info'] = array(
+    'id' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'desc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'module_name' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
@@ -66,9 +75,16 @@ function modules_checklist_log_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'ip' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
     'timestamp' => array(
       'sortable' => 1,
-      'default_sort_order' => 'desc',
+      'default_sort_order' => 'asc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -86,6 +102,12 @@ function modules_checklist_log_views_default_views() {
   $handler->display->display_options['relationships']['author_info']['table'] = 'modules_checklist_log';
   $handler->display->display_options['relationships']['author_info']['field'] = 'author_info';
   $handler->display->display_options['relationships']['author_info']['required'] = TRUE;
+  /* Field: Modules Checklist log entry: Log entry ID */
+  $handler->display->display_options['fields']['id']['id'] = 'id';
+  $handler->display->display_options['fields']['id']['table'] = 'modules_checklist_log';
+  $handler->display->display_options['fields']['id']['field'] = 'id';
+  $handler->display->display_options['fields']['id']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['id']['element_label_colon'] = FALSE;
   /* Field: Modules Checklist log entry: Module Name */
   $handler->display->display_options['fields']['module_name']['id'] = 'module_name';
   $handler->display->display_options['fields']['module_name']['table'] = 'modules_checklist_log';
@@ -101,7 +123,7 @@ function modules_checklist_log_views_default_views() {
   $handler->display->display_options['fields']['name']['table'] = 'users';
   $handler->display->display_options['fields']['name']['field'] = 'name';
   $handler->display->display_options['fields']['name']['relationship'] = 'author_info';
-  $handler->display->display_options['fields']['name']['label'] =  t('User');
+  $handler->display->display_options['fields']['name']['label'] = t('User');
   $handler->display->display_options['fields']['name']['element_label_colon'] = FALSE;
   /* Field: Modules Checklist log entry: IP address */
   $handler->display->display_options['fields']['ip']['id'] = 'ip';
@@ -122,7 +144,7 @@ function modules_checklist_log_views_default_views() {
   $handler->display->display_options['filters']['module_name']['group'] = 1;
   $handler->display->display_options['filters']['module_name']['exposed'] = TRUE;
   $handler->display->display_options['filters']['module_name']['expose']['operator_id'] = 'module_name_op';
-  $handler->display->display_options['filters']['module_name']['expose']['label'] =  t('Module Name');
+  $handler->display->display_options['filters']['module_name']['expose']['label'] = t('Module Name');
   $handler->display->display_options['filters']['module_name']['expose']['operator'] = 'module_name_op';
   $handler->display->display_options['filters']['module_name']['expose']['identifier'] = 'module_name';
   $handler->display->display_options['filters']['module_name']['expose']['remember_roles'] = array(
@@ -136,7 +158,7 @@ function modules_checklist_log_views_default_views() {
   $handler->display->display_options['filters']['type']['group'] = 1;
   $handler->display->display_options['filters']['type']['exposed'] = TRUE;
   $handler->display->display_options['filters']['type']['expose']['operator_id'] = 'type_op';
-  $handler->display->display_options['filters']['type']['expose']['label'] =  t('Status');
+  $handler->display->display_options['filters']['type']['expose']['label'] = t('Status');
   $handler->display->display_options['filters']['type']['expose']['operator'] = 'type_op';
   $handler->display->display_options['filters']['type']['expose']['identifier'] = 'type';
   $handler->display->display_options['filters']['type']['expose']['remember_roles'] = array(
@@ -152,7 +174,7 @@ function modules_checklist_log_views_default_views() {
   $handler->display->display_options['filters']['uid']['group'] = 1;
   $handler->display->display_options['filters']['uid']['exposed'] = TRUE;
   $handler->display->display_options['filters']['uid']['expose']['operator_id'] = 'uid_op';
-  $handler->display->display_options['filters']['uid']['expose']['label'] =  t('User');
+  $handler->display->display_options['filters']['uid']['expose']['label'] = t('User');
   $handler->display->display_options['filters']['uid']['expose']['operator'] = 'uid_op';
   $handler->display->display_options['filters']['uid']['expose']['identifier'] = 'uid';
   $handler->display->display_options['filters']['uid']['expose']['remember_roles'] = array(
@@ -165,7 +187,7 @@ function modules_checklist_log_views_default_views() {
   $handler->display->display_options['filters']['ip']['field'] = 'ip';
   $handler->display->display_options['filters']['ip']['exposed'] = TRUE;
   $handler->display->display_options['filters']['ip']['expose']['operator_id'] = 'ip_op';
-  $handler->display->display_options['filters']['ip']['expose']['label'] =  t('IP address');
+  $handler->display->display_options['filters']['ip']['expose']['label'] = t('IP address');
   $handler->display->display_options['filters']['ip']['expose']['operator'] = 'ip_op';
   $handler->display->display_options['filters']['ip']['expose']['identifier'] = 'ip';
   $handler->display->display_options['filters']['ip']['expose']['remember_roles'] = array(

@@ -64,7 +64,8 @@ function modules_checklist_log_schema() {
  */
 function modules_checklist_log_disable() {
   // Saves into variable who is disabling the module.
-  modules_checklist_log_save('modules_checklist_log', MODULES_CHECKLIST_LOG_TYPE_DISABLED, FALSE);
+  modules_checklist_log_save(array('module_name' => 'modules_checklist_log', 'type' => MODULES_CHECKLIST_LOG_TYPE_DISABLED),
+    array('variable', 'file'));
 }
 
 /**
@@ -73,22 +74,50 @@ function modules_checklist_log_disable() {
 function modules_checklist_log_uninstall() {
   drupal_load('module', 'modules_checklist_log');
   // Saves into variable who is unistalling the module.
-  modules_checklist_log_save('modules_checklist_log', MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED, FALSE);
+  modules_checklist_log_save(array('module_name' => 'modules_checklist_log', 'type' => MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED),
+    array('variable', 'file'));
 }
 
 /**
  * Implement hook_enable().
  */
 function modules_checklist_log_enable() {
-  // Restores into the database who has previously disabled the module.
-  if (variable_get('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_DISABLED)) {
-    modules_checklist_log_save('modules_checklist_log', MODULES_CHECKLIST_LOG_TYPE_DISABLED);
+  $disabled_var = variable_get('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_DISABLED);
+  $uninstalled_var = variable_get('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED);
+
+  $disabled_backup_path = MODULES_CHECKLIST_LOG_BACKUP_DIR . '/modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_DISABLED;
+  $uninstalled_backup_path = MODULES_CHECKLIST_LOG_BACKUP_DIR . '/modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED;
+
+  // Creates log entry who has previously disabled the module.
+  if ($disabled_var) {
+    modules_checklist_log_save($disabled_var);
     variable_del('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_DISABLED);
   }
+  // If variable was manually removed from the database - restore using backup file.
+  else {
+    if (file_exists($disabled_backup_path)) {
+      modules_checklist_log_save(modules_checklist_log_get_backup_file_content($disabled_backup_path));
+    }
+  }
 
-    // Restores into the database who has previously unistalled the module.
-  if (variable_get('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED)) {
-    modules_checklist_log_save('modules_checklist_log', MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED);
+  // Creates log entry who has previously unistalled the module.
+  if ($uninstalled_var) {
+    modules_checklist_log_save($uninstalled_var);
     variable_del('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED);
+  }
+  // If variable was manually removed from the database - restore using backup file.
+  else {
+    if (file_exists($uninstalled_backup_path)) {
+      modules_checklist_log_save(modules_checklist_log_get_backup_file_content($uninstalled_backup_path));
+    }
+  }
+
+  // Remove backups because we no longer need them.
+  if (file_exists($disabled_backup_path)) {
+    drupal_unlink($disabled_backup_path);
+  }
+
+  if (file_exists($uninstalled_backup_path)) {
+    drupal_unlink($uninstalled_backup_path);
   }
 }
