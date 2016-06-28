@@ -62,7 +62,7 @@ function modules_checklist_log_schema() {
 /**
  * Implements hook_disable().
  */
-function module_checklist_log_disable() {
+function modules_checklist_log_disable() {
   // Saves into variable who is disabling the module.
   modules_checklist_log_save('modules_checklist_log', MODULES_CHECKLIST_LOG_TYPE_DISABLED, FALSE);
 }
@@ -70,8 +70,8 @@ function module_checklist_log_disable() {
 /**
  * Implements hook_uninstall().
  */
-function module_checklist_log_uninstall() {
-  drupal_load('module', 'module_checklist_log');
+function modules_checklist_log_uninstall() {
+  drupal_load('module', 'modules_checklist_log');
   // Saves into variable who is unistalling the module.
   modules_checklist_log_save('modules_checklist_log', MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED, FALSE);
 }
@@ -79,14 +79,14 @@ function module_checklist_log_uninstall() {
 /**
  * Implement hook_enable().
  */
-function module_checklist_log_enable() {
-  // Restores into the database who has disabled the module.
+function modules_checklist_log_enable() {
+  // Restores into the database who has previously disabled the module.
   if (variable_get('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_DISABLED)) {
     modules_checklist_log_save('modules_checklist_log', MODULES_CHECKLIST_LOG_TYPE_DISABLED);
     variable_del('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_DISABLED);
   }
 
-    // Restores into the database who has unistalled the module.
+    // Restores into the database who has previously unistalled the module.
   if (variable_get('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED)) {
     modules_checklist_log_save('modules_checklist_log', MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED);
     variable_del('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED);
