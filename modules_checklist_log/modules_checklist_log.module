@@ -222,6 +222,10 @@ function modules_checklist_log_views_pre_render(&$view) {
       }
 
       $view->result[$delta]->modules_checklist_log_type = modules_checklist_log_get_type_label($view->result[$delta]->modules_checklist_log_type);
+
+      if ($view->result[$delta]->users_modules_checklist_log_uid == 0) {
+        $view->result[$delta]->users_modules_checklist_log_name = t('Anonymous or Drush');
+      }
     }
   }
 }
@@ -400,7 +404,12 @@ function modules_checklist_log_get_usernames() {
   $result = $query->execute()->fetchAll();
 
   foreach ($result as $item) {
-    $users[$item->uid] = $item->name;
+    if ($item->uid == 0) {
+      $users['Anonymous'] = t('Anonymous or Drush');
+    }
+    else {
+      $users[$item->name] = $item->name;
+    }
   }
 
   return $users;

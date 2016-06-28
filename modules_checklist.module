@@ -7,7 +7,6 @@
 
 // ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
-// @todo test log entry using Drush.
 // @todo on the status report page display status check. Use modules_checklist_status_check() for that.
 // @todo module can be: installed, enabled, disabled, uninstalled, physically removed. Test all 5 situations.
 
@@ -17,15 +16,6 @@
 // @todo think how to specify correct version for the sub-module.
 // @todo create Project Page and promote the module to the permanent d.org project.
 // @todo install the module on Prod sites.
-
-// ==== RELEASE 7x-1.1. Focus on code quality (Views handlers instead of hook_alter, etc) and usability.
-// @todo create include 'all enabled modules' checkbox.
-// @todo highlight rows in the table according to the priority of modules (required, optional etc).
-// @todo create views field handlers for Module Names and Type (Status). instead of altering for Views fields in modules_checklist_log_views_pre_render().
-// @todo output Available modules as table, add check all checkbox.
-// @todo add email notification if required module is disabled and on module uninstall.
-// @todo think about periodic check of systems table to ensure that entry for the manually enabled in DB modules is present in the log. Check if this logic works.
-// @todo add filters by Date - use Date popup. After Views regeneration add t() to all titles and labels.
 
 // Defines text on the "Generate" button.
 define('MODULE_CHECKLIST_GENERATE_BUTTON_TEXT', 'Generate');
