@@ -20,6 +20,12 @@ function modules_checklist_settings_form() {
     );
   }
 
+  $form['check_all_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Check all enabled modules'),
+    '#default_value' => 0,
+  );
+
   $form['modules_checklist'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available modules'),
@@ -31,11 +37,15 @@ function modules_checklist_settings_form() {
   foreach ($modules_data as $module_machine_name => $module) {
     $prefix = $module->status ?
       '<em class="enabled">' . t('enabled') . '</em>' : '<em class="disabled">' . t('disabled') . '</em>';
+    $class = $module->status ? 'enabled_module' : 'disabled_module';
 
     $form['modules_checklist'][$module_machine_name] = array(
       '#type' => 'checkbox',
       '#title' => $prefix . ' <strong>' . $module->info['name'] . '</strong> [' . $module_machine_name . ']',
       '#default_value' => is_array($required_modules) && in_array($module_machine_name, $required_modules),
+      '#attributes' => array(
+        'class' => array($class),
+      ),
     );
   }
 
@@ -46,6 +56,7 @@ function modules_checklist_settings_form() {
   );
 
   $form['#attached']['css'][] = drupal_get_path('module', 'modules_checklist') . '/modules_checklist.css';
+  $form['#attached']['js'][] = drupal_get_path('module', 'modules_checklist') . '/modules_checklist.js';
 
   return system_settings_form($form);
 }

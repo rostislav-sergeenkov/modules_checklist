@@ -150,7 +150,6 @@ function modules_checklist_log_views_api() {
  * Implements hook_views_data_alter().
  */
 function modules_checklist_log_views_data_alter(&$data) {
-  // @todo implement Views field handler in v.7x-1.1 instead.
   $data['modules_checklist_log']['type']['field']['handler'] = 'views_handler_field';
   unset($data['modules_checklist_log']['type']['field']['float']);
 
