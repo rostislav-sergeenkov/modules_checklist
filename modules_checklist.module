@@ -59,17 +59,19 @@ function modules_checklist_menu() {
  * Implements hook_init().
  */
 function modules_checklist_init() {
-  if (user_access('configure modules_checklist settings')) {
-    $check_status = modules_checklist_status_check(system_rebuild_module_data(), conf_path() . '/settings.php');
+  if (current_path() != 'admin/reports/status') {
+    if (user_access('configure modules_checklist settings')) {
+      $check_status = modules_checklist_status_check(system_rebuild_module_data(), conf_path() . '/settings.php');
 
-    if (in_array($check_status['status'], array('warning', 'error'))) {
-      $prefix = t('Please !configure Modules Checklist module.',
-        array(
-          '!configure' => l(t('configure'), 'admin/config/development/modules_checklist_settings'),
-        )
-      );
-      $message = $prefix . '<br />' . $check_status['message'];
-      drupal_set_message($message, $check_status['status']);
+      if (in_array($check_status['status'], array('warning', 'error'))) {
+        $prefix = t('Please !configure Modules Checklist module.',
+          array(
+            '!configure' => l(t('configure'), 'admin/config/development/modules_checklist_settings'),
+          )
+        );
+        $message = $prefix . '<br />' . $check_status['message'];
+        drupal_set_message($message, $check_status['status'], FALSE);
+      }
     }
   }
 }
