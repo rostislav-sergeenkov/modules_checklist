@@ -9,10 +9,25 @@
  * Builds settings form for Modules Checklist log module.
  */
 function modules_checklist_settings_form() {
-  $required_modules = variable_get('modules_checklist_required_modules');
   $modules_data = system_rebuild_module_data();
   $config_path = conf_path() . '/settings.php';
   $check = modules_checklist_status_check($modules_data, $config_path);
+  $required_modules = variable_get('modules_checklist_required_modules');
+
+  $module_options = array();
+  $default_modules = array();
+
+  foreach ($modules_data as $module_machine_name => $module) {
+    $module_options[$module_machine_name] = array(
+      'status' => $module->status ?
+        '<em class="enabled">' . t('enabled') . '</em>' : '<em class="disabled">' . t('disabled') . '</em>',
+      'required' => (is_array($required_modules) && in_array($module_machine_name, $required_modules)) ?
+        t('yes') : '',
+      'name' => '<strong>' . $module->info['name'] . '</strong>',
+      'machine_name' => $module_machine_name,
+    );
+    $default_modules[$module_machine_name] = (int) (is_array($required_modules) && in_array($module_machine_name, $required_modules));
+  }
 
   if ($check['status'] == 'status') {
     $form['modules_checklist_status_check'] = array(
@@ -34,20 +49,17 @@ function modules_checklist_settings_form() {
     '#tree' => TRUE,
   );
 
-  foreach ($modules_data as $module_machine_name => $module) {
-    $prefix = $module->status ?
-      '<em class="enabled">' . t('enabled') . '</em>' : '<em class="disabled">' . t('disabled') . '</em>';
-    $class = $module->status ? 'enabled_module' : 'disabled_module';
-
-    $form['modules_checklist'][$module_machine_name] = array(
-      '#type' => 'checkbox',
-      '#title' => $prefix . ' <strong>' . $module->info['name'] . '</strong> [' . $module_machine_name . ']',
-      '#default_value' => is_array($required_modules) && in_array($module_machine_name, $required_modules),
-      '#attributes' => array(
-        'class' => array($class),
-      ),
-    );
-  }
+  $form['modules_checklist']['modules'] = array(
+    '#type' => 'tableselect',
+    '#header' => array(
+      'status' => t('Status'),
+      'required' => t('Required / Optional'),
+      'name' => t('Module Name'),
+      'machine_name' => t('Module Machine Name'),
+    ),
+    '#options' => $module_options,
+    '#default_value' => $default_modules,
+  );
 
   $form['generate'] = array(
     '#type' => 'submit',
@@ -65,8 +77,8 @@ function modules_checklist_settings_form() {
  * Submit handler for the "Generate" button of modules_checklist_settings_form().
  */
 function modules_checklist_settings_form_generate_config($form, &$form_state) {
-  $config = modules_checklist_get_modules_config_content($form_state['values']['modules_checklist']);
-  drupal_set_message($config);
+  $config = modules_checklist_get_modules_config_content($form_state['values']['modules_checklist']['modules']);
+  drupal_set_message($config, 'status', FALSE);
 }
 
 /**
