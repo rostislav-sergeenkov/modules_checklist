@@ -4,12 +4,25 @@
   overflow-x: hidden;
 }
 
-#edit-modules-checklist em.enabled {
+#edit-modules-checklist span.enabled {
   color: green;
+  font-weight: bold;
+}
+
+#edit-modules-checklist span.disabled {
   font-size: 0.9em;
 }
 
-#edit-modules-checklist em.disabled {
+#edit-modules-checklist span.module-required {
   color: red;
+  font-weight: bold;
+}
+
+#edit-modules-checklist span.module-optional {
+  color: orange;
+  font-weight: bold;
+}
+
+#edit-modules-checklist span.module-undefined {
   font-size: 0.9em;
 }

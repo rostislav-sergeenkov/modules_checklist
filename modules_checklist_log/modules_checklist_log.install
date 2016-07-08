@@ -42,6 +42,12 @@ function modules_checklist_log_schema() {
         'default' => 0,
         'description' => 'The type of the event.',
       ),
+      'status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The status of the module in config.',
+      ),
       'timestamp' => array(
         'type' => 'int',
         'not null' => TRUE,
@@ -63,9 +69,16 @@ function modules_checklist_log_schema() {
  * Implements hook_disable().
  */
 function modules_checklist_log_disable() {
+  $module_name = 'modules_checklist_log';
   // Saves into variable who is disabling the module.
-  modules_checklist_log_save(array('module_name' => 'modules_checklist_log', 'type' => MODULES_CHECKLIST_LOG_TYPE_DISABLED),
-    array('variable', 'file'));
+  modules_checklist_log_save(
+    array(
+      'module_name' => $module_name,
+      'status' => modules_checklist_log_get_module_status($module_name),
+      'type' => MODULES_CHECKLIST_LOG_TYPE_DISABLED,
+    ),
+    array('variable', 'file')
+  );
 }
 
 /**
@@ -73,9 +86,16 @@ function modules_checklist_log_disable() {
  */
 function modules_checklist_log_uninstall() {
   drupal_load('module', 'modules_checklist_log');
+  $module_name = 'modules_checklist_log';
   // Saves into variable who is unistalling the module.
-  modules_checklist_log_save(array('module_name' => 'modules_checklist_log', 'type' => MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED),
-    array('variable', 'file'));
+  modules_checklist_log_save(
+    array(
+      'module_name' => 'modules_checklist_log',
+      'status' => modules_checklist_log_get_module_status($module_name),
+      'type' => MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED,
+    ),
+    array('variable', 'file')
+  );
 }
 
 /**

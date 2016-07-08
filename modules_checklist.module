@@ -11,6 +11,10 @@
 // @todo implement required/optional/none logic.
 // @todo on the status report page display status check. Use modules_checklist_status_check() for that.
 // @todo module can be: installed, enabled, disabled, uninstalled, physically removed. Test all 5 situations.
+// @todo add warning message on manual enabling/disabling the module using UI
+// @todo think how to parallel logic between required and optional modules.
+// @todo remove discrepancy - module can be added both to required and optional. Add message "no discrepancy found".
+// @todo add functionality to hide required and hide optional to separate generation of 2 lists.
 
 // -- release action items ---
 // @todo update README.txt file
@@ -95,7 +99,7 @@ function modules_checklist_status_check($modules_data, $config_path) {
 
     if (empty($non_existent_modules)) {
       $message = array_merge($message, array(
-        'List of required modules is found in !file file.',
+        'List of required modules is set in !file file.',
       ));
 
       // Either all modules from the list are available in the system.

@@ -16,6 +16,10 @@ define('MODULES_CHECKLIST_LOG_TYPE_INSTALLED', 1);
 define('MODULES_CHECKLIST_LOG_TYPE_ENABLED', 2);
 define('MODULES_CHECKLIST_LOG_TYPE_DISABLED', 3);
 define('MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED', 4);
+// Defines status of the modules according to the configuration.
+define('MODULES_CHECKLIST_LOG_STATUS_UNDEFINED', 0);
+define('MODULES_CHECKLIST_LOG_STATUS_REQUIRED', 1);
+define('MODULES_CHECKLIST_LOG_STATUS_OPTIONAL', 2);
 
 /**
  * Implements hook_help().
@@ -120,10 +124,16 @@ function modules_checklist_log_entity_property_info() {
       'description' => 'IP address of the user who triggered the event.',
       'schema field' => 'ip',
     ),
-    'type' => array(
+    'status' => array(
       'type'  => 'integer',
       'label' => t('Status'),
-      'description' => t('The type of the event (status of the module).'),
+      'description' => t('The status of the module according to the configuration.'),
+      'schema field' => 'status',
+    ),
+    'type' => array(
+      'type'  => 'integer',
+      'label' => t('Type'),
+      'description' => t('The type of the event (disabled, unistalled etc).'),
       'schema field' => 'type',
     ),
     'timestamp' => array(
@@ -150,6 +160,11 @@ function modules_checklist_log_views_api() {
  * Implements hook_views_data_alter().
  */
 function modules_checklist_log_views_data_alter(&$data) {
+  // Set default handler for the Views field b/c we are going to output string instead of int.
+  $data['modules_checklist_log']['status']['field']['handler'] = 'views_handler_field';
+  unset($data['modules_checklist_log']['status']['field']['float']);
+
+  // Set default handler for the Views field b/c we are going to output string instead of int.
   $data['modules_checklist_log']['type']['field']['handler'] = 'views_handler_field';
   unset($data['modules_checklist_log']['type']['field']['float']);
 
@@ -172,7 +187,13 @@ function modules_checklist_log_views_data_alter(&$data) {
  */
 function modules_checklist_log_modules_installed($modules) {
   foreach ($modules as $module) {
-    modules_checklist_log_save(array('module_name' => $module, 'type' => MODULES_CHECKLIST_LOG_TYPE_INSTALLED));
+    modules_checklist_log_save(
+      array(
+        'module_name' => $module,
+        'status' => modules_checklist_log_get_module_status($module),
+        'type' => MODULES_CHECKLIST_LOG_TYPE_INSTALLED,
+        )
+    );
   }
 }
 
@@ -181,7 +202,13 @@ function modules_checklist_log_modules_installed($modules) {
  */
 function modules_checklist_log_modules_enabled($modules) {
   foreach ($modules as $module) {
-    modules_checklist_log_save(array('module_name' => $module, 'type' => MODULES_CHECKLIST_LOG_TYPE_ENABLED));
+    modules_checklist_log_save(
+      array(
+        'module_name' => $module,
+        'status' => modules_checklist_log_get_module_status($module),
+        'type' => MODULES_CHECKLIST_LOG_TYPE_ENABLED,
+      )
+    );
   }
 }
 
@@ -190,7 +217,13 @@ function modules_checklist_log_modules_enabled($modules) {
  */
 function modules_checklist_log_modules_disabled($modules) {
   foreach ($modules as $module) {
-    modules_checklist_log_save(array('module_name' => $module, 'type' => MODULES_CHECKLIST_LOG_TYPE_DISABLED));
+    modules_checklist_log_save(
+      array(
+        'module_name' => $module,
+        'status' => modules_checklist_log_get_module_status($module),
+        'type' => MODULES_CHECKLIST_LOG_TYPE_DISABLED,
+      )
+    );
   }
 }
 
@@ -199,7 +232,13 @@ function modules_checklist_log_modules_disabled($modules) {
  */
 function modules_checklist_log_modules_uninstalled($modules) {
   foreach ($modules as $module) {
-    modules_checklist_log_save(array('module_name' => $module, 'type' => MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED));
+    modules_checklist_log_save(
+      array(
+        'module_name' => $module,
+        'status' => modules_checklist_log_get_module_status($module),
+        'type' => MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED,
+      )
+    );
   }
 }
 
@@ -220,6 +259,7 @@ function modules_checklist_log_views_pre_render(&$view) {
         $view->result[$delta]->modules_checklist_log_module_name = modules_checklist_get_uninstalled_and_deleted_label($module_machine_name);
       }
 
+      $view->result[$delta]->modules_checklist_log_status = modules_checklist_log_get_module_status_label($view->result[$delta]->modules_checklist_log_status);
       $view->result[$delta]->modules_checklist_log_type = modules_checklist_log_get_type_label($view->result[$delta]->modules_checklist_log_type);
 
       if ($view->result[$delta]->users_modules_checklist_log_uid == 0) {
@@ -235,21 +275,28 @@ function modules_checklist_log_views_pre_render(&$view) {
 function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'views_exposed_form') {
     if ($form_state['view']->name == 'modules_checklist_log') {
-      // Transforms Views default module_name text field to the user-friendly select list.
+      // Transforms Views default Module Name text field to the user-friendly select list.
       $form['module_name']['#type'] = 'select';
       $form['module_name']['#options'] = modules_checklist_log_get_module_names();
       $form['module_name']['#empty_option'] = ' - ' . t('None') . ' - ';
       $form['module_name']['#empty_value'] = '';
       unset($form['module_name']['#size']);
 
-      // Transforms Views default status text field to the user-friendly select list.
+      // Transforms Views default Status text field to the user-friendly select list.
+      $form['status']['#type'] = 'select';
+      $form['status']['#options'] = modules_checklist_log_get_status();
+      $form['status']['#empty_option'] = ' - ' . t('None') . ' - ';
+      $form['status']['#empty_value'] = '';
+      unset($form['status']['#size']);
+
+      // Transforms Views default Event Type text field to the user-friendly select list.
       $form['type']['#type'] = 'select';
       $form['type']['#options'] = modules_checklist_log_get_types();
       $form['type']['#empty_option'] = ' - ' . t('None') . ' - ';
       $form['type']['#empty_value'] = '';
       unset($form['type']['#size']);
 
-      // Transforms Views default uid text field to the user-friendly select list.
+      // Transforms Views default User text field to the user-friendly select list.
       $form['uid']['#type'] = 'select';
       $form['uid']['#options'] = modules_checklist_log_get_usernames();
       $form['uid']['#empty_option'] = ' - ' . t('None') . ' - ';
@@ -300,10 +347,20 @@ function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
 function modules_checklist_log_save($log_item, $storage = array('db')) {
   global $user;
 
+  if (!empty($log_item['module_name'])) {
+    $module_name = $log_item['module_name'];
+    $module_status = modules_checklist_log_get_module_status($module_name);
+  }
+  else {
+    $module_name = '';
+    $module_status = MODULES_CHECKLIST_LOG_STATUS_UNDEFINED;
+  }
+
   $log_entry = array(
-    'module_name' => !empty($log_item['module_name']) ? $log_item['module_name'] : '',
+    'module_name' => $module_name,
     'uid' => !empty($log_item['uid']) ? $log_item['uid'] : $user->uid,
     'ip' => !empty($log_item['ip']) ? $log_item['ip'] : $user->hostname,
+    'status' => $module_status,
     'type' => !empty($log_item['type']) ? $log_item['type'] : '',
     'timestamp' => !empty($log_item['timestamp']) ? $log_item['timestamp'] : REQUEST_TIME,
   );
@@ -370,6 +427,26 @@ function modules_checklist_log_get_types() {
   }
 
   return $types;
+}
+
+/**
+ * Returns array of unique statuses from the Module Checklist log.
+ *
+ * @return array
+ */
+function modules_checklist_log_get_status() {
+  $statuses = array();
+  $result = db_query('SELECT DISTINCT(mcl.status) FROM {modules_checklist_log} mcl ORDER BY mcl.status')->fetchAll();
+
+  foreach ($result as $item) {
+    $status_label = modules_checklist_log_get_module_status_label($item->status);
+
+    if ($status_label !== '') {
+      $statuses[$item->status] = $status_label;
+    }
+  }
+
+  return $statuses;
 }
 
 /**
@@ -444,9 +521,40 @@ function modules_checklist_log_get_type_label($type) {
 }
 
 /**
+ * Return human readable label for the given module status.
+ *
+ * @param int $status
+ * @param bool $t
+ *
+ * @return string
+ */
+function modules_checklist_log_get_module_status_label($status, $t = TRUE) {
+  switch ($status) {
+    case MODULES_CHECKLIST_LOG_STATUS_REQUIRED:
+      $label = 'required';
+      break;
+    case MODULES_CHECKLIST_LOG_STATUS_OPTIONAL:
+      $label = 'optional';
+      break;
+    case MODULES_CHECKLIST_LOG_STATUS_UNDEFINED:
+      $label = 'undefined';
+      break;
+    default:
+      // Module isn't listed as required or optional in config.
+      $label = '';
+  }
+
+  if ($t && !empty($label)) {
+    return t($label);
+  }
+
+  return $label;
+}
+
+/**
  * Returns the content of the backup file.
  *
- * @param $path
+ * @param string $path
  *
  * @return array
  */
@@ -456,4 +564,26 @@ function modules_checklist_log_get_backup_file_content($path) {
   fclose($disabled_descriptor);
 
   return unserialize($result);
+}
+
+/**
+ * Returns status of the config based on the defined configuration.
+ *
+ * @param string $module
+ * @param bool $t
+ *
+ * @return int
+ */
+function modules_checklist_log_get_module_status($module) {
+  $required_modules = variable_get('modules_checklist_required_modules');
+  $optional_modules = variable_get('modules_checklist_optional_modules');
+
+  if (is_array($required_modules) && in_array($module, $required_modules)) {
+    return MODULES_CHECKLIST_LOG_STATUS_REQUIRED;
+  }
+  elseif (is_array($optional_modules) && in_array($module, $optional_modules)) {
+    return MODULES_CHECKLIST_LOG_STATUS_OPTIONAL;
+  }
+
+  return MODULES_CHECKLIST_LOG_STATUS_UNDEFINED;
 }
