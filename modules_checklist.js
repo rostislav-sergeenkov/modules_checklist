@@ -22,6 +22,8 @@
           checkedEnabledModules.removeAttr('checked');
         }
       });
+
+      $('#modules-checklist-settings-form input[data-checked="1"]').click();
     }
   }
 })(jQuery);

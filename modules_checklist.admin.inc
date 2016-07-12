@@ -15,9 +15,6 @@ function modules_checklist_settings_form() {
   $required_modules = variable_get('modules_checklist_required_modules');
   $optional_modules = variable_get('modules_checklist_optional_modules');
 
-  $module_options = array();
-  $default_modules = array();
-
   if ($check['status'] == 'status') {
     $form['modules_checklist_status_check'] = array(
       '#markup' => '<div class="messages ' . $check['status'] . '">' . $check['message'] . '</div>',
@@ -40,47 +37,47 @@ function modules_checklist_settings_form() {
   );
 
   foreach ($modules_data as $module_machine_name => $module) {
-    $status = modules_checklist_log_get_module_status($module_machine_name);
-
-    $module_options[$module_machine_name] = array(
-      'enabled' => $module->status ?
-        '<span class="enabled">' . t('enabled') . '</span>' : '<span class="disabled">' . t('disabled') . '</span>',
-      'status' => '<span class="module-' . modules_checklist_log_get_module_status_label($status, FALSE) . '">' . modules_checklist_log_get_module_status_label($status) . '</span>',
-      'name' => '<strong>' . $module->info['name'] . '</strong> [' . $module_machine_name . ']',
-    );
-    // @todo think how to parallel logic between required and optional modules. How to deal with optional modules.
-    $default_modules[$module_machine_name] = (int) (is_array($required_modules) && in_array($module_machine_name, $required_modules));
+    $module_is_required = (int) (is_array($required_modules) && in_array($module_machine_name, $required_modules));
+    $module_is_optional = (int) (is_array($optional_modules) && in_array($module_machine_name, $optional_modules));
+    $module_is_disabled = (int) !$module_is_required && !$module_is_optional;
 
     $form['modules_checklist']['modules'][$module_machine_name]['required'] = array(
       '#type' => 'radio',
+      '#default_value' => $module_is_required,
       '#attributes' => array(
         'data-module' => $module_machine_name,
         'data-status' => 'required',
+        'data-checked' => $module_is_required,
       ),
     );
 
     $form['modules_checklist']['modules'][$module_machine_name]['optional'] = array(
       '#type' => 'radio',
+      '#default_value' => $module_is_optional,
       '#attributes' => array(
         'data-module' => $module_machine_name,
         'data-status' => 'optional',
+        'data-checked' => $module_is_optional,
       ),
     );
 
     $form['modules_checklist']['modules'][$module_machine_name]['disabled'] = array(
       '#type' => 'radio',
+      '#default_value' => $module_is_disabled,
       '#attributes' => array(
         'data-module' => $module_machine_name,
         'data-status' => 'disabled',
+        'data-checked' => $module_is_disabled,
       ),
     );
 
     $form['modules_checklist']['modules'][$module_machine_name]['enabled'] = array(
-      '#markup' => $module_options[$module_machine_name]['enabled'],
+      '#markup' => $module->status ?
+        '<span class="enabled">' . t('enabled') . '</span>' : '<span class="disabled">' . t('disabled') . '</span>',
     );
 
     $form['modules_checklist']['modules'][$module_machine_name]['label'] = array(
-      '#markup' => $module_options[$module_machine_name]['name'],
+      '#markup' => '<strong>' . $module->info['name'] . '</strong> [' . $module_machine_name . ']',
     );
   }
 
@@ -100,18 +97,35 @@ function modules_checklist_settings_form() {
  * Submit handler for the "Generate" button of modules_checklist_settings_form().
  */
 function modules_checklist_settings_form_generate_config($form, &$form_state) {
-  if ($form_state['triggering_element']['#name'] == 'generate_required') {
-    $flag = 'required';
-  }
-  elseif ($form_state['triggering_element']['#name'] == 'generate_optional') {
-    $flag = 'optional';
-  }
-  else {
-    $flag = '';
+  $required_modules = array();
+  $optional_modules = array();
+  $disabled_modules = array();
+
+  foreach ($form_state['values']['modules_checklist']['modules'] as $module => $module_values) {
+    foreach ($module_values as $key => $value) {
+      if ($value === 'on') {
+        if ($key == 'required') {
+          $required_modules[] = $module;
+        }
+        elseif ($key == 'optional') {
+          $optional_modules[] = $module;
+        }
+        elseif ($key == 'disabled') {
+          $disabled_modules[] = $module;
+        }
+      }
+    }
   }
 
-  $config = modules_checklist_get_modules_config_content($form_state['values']['modules_checklist']['modules'], $flag);
-  drupal_set_message($config, 'status', FALSE);
+  if (!empty($required_modules)) {
+    $config = modules_checklist_get_modules_config_content($required_modules, 'required');
+    drupal_set_message($config, 'status', FALSE);
+  }
+
+  if (!empty($optional_modules)) {
+    $config = modules_checklist_get_modules_config_content($optional_modules, 'optional');
+    drupal_set_message($config, 'status', FALSE);
+  }
 }
 
 /**
@@ -127,7 +141,9 @@ function modules_checklist_get_modules_config_content($modules, $flag) {
 
   if (!empty($flag)) {
     $config_path = conf_path() . '/settings.php';
-    $output = '<strong>// ' . t('Modules Checklist configuration. Copy the code below and paste it into !file file.', array('!file' => $config_path)) . '</strong><br/>';
+    $header = t('Modules Checklist: !flag modules. Copy the code below and paste it into !file file.',
+      array('!file' => $config_path, '!flag' => $flag));
+    $output = '<strong>// ' . $header . '</strong><br/>';
     $output .= '$conf[' . "'modules_checklist_" . $flag . "_modules'" . '] = array(<br/>';
     $checked_modules = modules_checklist_get_checked_modules($modules);
 
@@ -153,10 +169,8 @@ function modules_checklist_get_checked_modules($modules) {
   $module_list = array();
   $modules_data = system_rebuild_module_data();
 
-  foreach ($modules as $module_machine_name => $checked) {
-    if (!empty($checked)) {
-      $module_list[$module_machine_name] = $modules_data[$module_machine_name]->info['name'];
-    }
+  foreach ($modules as $module_machine_name) {
+    $module_list[$module_machine_name] = $modules_data[$module_machine_name]->info['name'];
   }
 
   return $module_list;
