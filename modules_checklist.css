@@ -23,6 +23,6 @@
   font-weight: bold;
 }
 
-#edit-modules-checklist span.module-undefined {
+#edit-modules-checklist span.module-disabled {
   font-size: 0.9em;
 }

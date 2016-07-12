@@ -34,6 +34,18 @@ function modules_checklist_help($path, $arg) {
 }
 
 /**
+ * Implements hook_theme().
+ */
+function modules_checklist_theme() {
+  return array(
+    'modules_checklist_table' => array(
+      'render element' => 'form',
+      'file' => 'modules_checklist.admin.inc',
+    ),
+  );
+}
+
+/**
  * Implements hook_permission().
  */
 function modules_checklist_permission() {

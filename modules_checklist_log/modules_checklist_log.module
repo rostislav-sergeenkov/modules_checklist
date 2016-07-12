@@ -537,7 +537,7 @@ function modules_checklist_log_get_module_status_label($status, $t = TRUE) {
       $label = 'optional';
       break;
     case MODULES_CHECKLIST_LOG_STATUS_UNDEFINED:
-      $label = 'undefined';
+      $label = 'disabled';
       break;
     default:
       // Module isn't listed as required or optional in config.
