@@ -26,3 +26,12 @@
 #edit-modules-checklist span.module-disabled {
   font-size: 0.9em;
 }
+
+#modules-checklist-settings-form #edit-check-all {
+  overflow: hidden;
+}
+
+#modules-checklist-settings-form #edit-check-all .form-type-radio {
+  float: left;
+  margin-right: 30px;
+}

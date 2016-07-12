@@ -7,7 +7,7 @@
 
 // ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
-// @todo implement 'Check all enabled modules' checkbox.
+// @todo fix status check.
 // @todo implement required/optional/none logic.
 // @todo on the status report page display status check. Use modules_checklist_status_check() for that.
 // @todo module can be: installed, enabled, disabled, uninstalled, physically removed. Test all 5 situations.

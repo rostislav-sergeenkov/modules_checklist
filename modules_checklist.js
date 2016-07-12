@@ -7,23 +7,48 @@
   Drupal.behaviors.modulesChecklist = {
     attach: function() {
       /**
-       * Implements 'Check all enabled modules' logic.
+       * Implements 'Set all enabled modules as' logic.
        */
-      $('#modules-checklist-settings-form input#edit-check-all-enabled').click(function(event) {
-        var checkedEnabledModules = $('#modules-checklist-settings-form input:checked.enabled_module');
-        var allEnabledModules = $('#modules-checklist-settings-form input.enabled_module');
-        var allDisabledModules = $('#modules-checklist-settings-form input.disabled_module');
+      $('#modules-checklist-settings-form #edit-check-all input').click(function(event) {
+        var checkedValue = $(this).val();
 
-        if (checkedEnabledModules.length != allEnabledModules.length) {
-          allEnabledModules.attr('checked', 'checked');
-          allDisabledModules.removeAttr('checked');
+        if (checkedValue == 'required') {
+          $('#modules_checklist_table input[data-status="required"][data-enabled="enabled"]').click()
         }
-        else {
-          checkedEnabledModules.removeAttr('checked');
+        else if (checkedValue == 'optional') {
+          $('#modules_checklist_table input[data-status="optional"][data-enabled="enabled"]').click()
+        }
+        else if (checkedValue == 'disabled') {
+          $('#modules_checklist_table input[data-status="disabled"][data-enabled="enabled"]').click()
         }
       });
 
-      $('#modules-checklist-settings-form input[data-checked="1"]').click();
+      /**
+       * Implements 'Uncheck all disabled modules' logic.
+       */
+      $('#modules-checklist-settings-form input#edit-uncheck-disabled').click(function() {
+        if ($(this).attr('checked')) {
+          $('#modules_checklist_table input[data-enabled="disabled"]').removeAttr('checked');
+        }
+        else {
+          $('#modules_checklist_table input[data-checked="1"][data-enabled="disabled"]').attr('checked', 'checked');
+        }
+      });
+
+      $('#modules_checklist_table input[data-checked="1"]').click();
+
+      $('#modules_checklist_table .form-type-radio input').click(function() {
+        var radios = $(this).closest('tr').find('.form-type-radio input');
+        var targetId = $(this).attr('id');
+
+        for (var i = 0; i < radios.length; i++) {
+          var radioId = $(radios[i]).attr('id');
+
+          if (targetId != radioId) {
+            $('#' + radioId).removeAttr('checked');
+          }
+        }
+      })
     }
   }
 })(jQuery);

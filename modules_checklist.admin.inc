@@ -21,9 +21,20 @@ function modules_checklist_settings_form() {
     );
   }
 
-  $form['check_all_enabled'] = array(
+  $form['check_all'] = array(
+    '#type' => 'radios',
+    '#title' => t('Set all enabled modules as'),
+    '#options' => array(
+      'required' => t('required'),
+      'optional' => t('optional'),
+      'disabled' => t('disabled'),
+    ),
+    '#default_value' => 0,
+  );
+
+  $form['uncheck_disabled'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Check all enabled modules'),
+    '#title' => t('Uncheck/exclude all disabled modules'),
     '#default_value' => 0,
   );
 
@@ -48,6 +59,7 @@ function modules_checklist_settings_form() {
         'data-module' => $module_machine_name,
         'data-status' => 'required',
         'data-checked' => $module_is_required,
+        'data-enabled' => $module->status ? 'enabled' : 'disabled',
       ),
     );
 
@@ -58,6 +70,7 @@ function modules_checklist_settings_form() {
         'data-module' => $module_machine_name,
         'data-status' => 'optional',
         'data-checked' => $module_is_optional,
+        'data-enabled' => $module->status ? 'enabled' : 'disabled',
       ),
     );
 
@@ -68,6 +81,7 @@ function modules_checklist_settings_form() {
         'data-module' => $module_machine_name,
         'data-status' => 'disabled',
         'data-checked' => $module_is_disabled,
+        'data-enabled' => $module->status ? 'enabled' : 'disabled',
       ),
     );
 
@@ -97,6 +111,10 @@ function modules_checklist_settings_form() {
  * Submit handler for the "Generate" button of modules_checklist_settings_form().
  */
 function modules_checklist_settings_form_generate_config($form, &$form_state) {
+  $messages = array(
+    'required' => array(),
+    'optional' => array(),
+  );
   $required_modules = array();
   $optional_modules = array();
   $disabled_modules = array();
@@ -117,13 +135,18 @@ function modules_checklist_settings_form_generate_config($form, &$form_state) {
     }
   }
 
-  if (!empty($required_modules)) {
-    $config = modules_checklist_get_modules_config_content($required_modules, 'required');
-    drupal_set_message($config, 'status', FALSE);
+  if (!empty($required_modules) || !empty($optional_modules)) {
+    if (!empty($required_modules)) {
+      $messages['required'] = $required_modules;
+    }
+
+    if (!empty($optional_modules)) {
+      $messages['optional'] = $optional_modules;
+    }
   }
 
-  if (!empty($optional_modules)) {
-    $config = modules_checklist_get_modules_config_content($optional_modules, 'optional');
+  foreach ($messages as $type => $data) {
+    $config = modules_checklist_get_modules_config_content($data, $type);
     drupal_set_message($config, 'status', FALSE);
   }
 }
@@ -208,5 +231,13 @@ function theme_modules_checklist_table($variables) {
     }
   }
 
-  return theme('table', array('header' => $header, 'rows' => $rows));
+  return theme('table',
+    array(
+      'header' => $header,
+      'rows' => $rows,
+      'attributes' => array(
+        'id' => array('modules_checklist_table'),
+      ),
+    )
+  );
 }
