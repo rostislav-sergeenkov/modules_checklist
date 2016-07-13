@@ -7,14 +7,11 @@
 
 // ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
-// @todo fix status check.
-// @todo implement required/optional/none logic.
-// @todo on the status report page display status check. Use modules_checklist_status_check() for that.
+// @todo add email notification on required module actions.
+// @todo fix status check on the admin page and report page. Create one function for this purpose (modules_checklist_status_check()).
 // @todo module can be: installed, enabled, disabled, uninstalled, physically removed. Test all 5 situations.
-// @todo add warning message on manual enabling/disabling the module using UI
-// @todo think how to parallel logic between required and optional modules.
-// @todo remove discrepancy - module can be added both to required and optional. Add message "no discrepancy found".
-// @todo add functionality to hide required and hide optional to separate generation of 2 lists.
+// @todo add warning message on manual enabling/disabling the required module using UI.
+// @todo double check and then clean up all @todos.
 
 // -- release action items ---
 // @todo update README.txt file
@@ -24,7 +21,7 @@
 // @todo install the module on Prod sites.
 
 // Defines text on the "Generate" button.
-define('MODULE_CHECKLIST_GENERATE_BUTTON_TEXT', 'Generate');
+define('MODULE_CHECKLIST_GENERATE_BUTTON_TEXT', 'Generate config');
 
 /**
  * Implements hook_help().
@@ -104,7 +101,8 @@ function modules_checklist_init() {
  */
 function modules_checklist_status_check($modules_data, $config_path) {
   $required_modules = variable_get('modules_checklist_required_modules');
-  $message = array('Modules Checklist status check.');
+  $optional_modules = variable_get('modules_checklist_optional_modules');
+  $message = array('<strong>Modules Checklist status check.</strong>');
 
   if (is_array($required_modules)) {
     $non_existent_modules = array_diff($required_modules, array_keys($modules_data));

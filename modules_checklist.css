@@ -1,3 +1,7 @@
+#modules-checklist-settings-form .messages {
+  margin: 10px 0 20px;
+}
+
 #edit-modules-checklist .fieldset-wrapper {
   max-height: 600px;
   overflow-y: scroll;

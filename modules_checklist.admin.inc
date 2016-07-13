@@ -9,6 +9,7 @@
  * Builds settings form for Modules Checklist log module.
  */
 function modules_checklist_settings_form() {
+  $superadmin = user_load(1);
   $modules_data = system_rebuild_module_data();
   $config_path = conf_path() . '/settings.php';
   $check = modules_checklist_status_check($modules_data, $config_path);
@@ -18,10 +19,18 @@ function modules_checklist_settings_form() {
   if ($check['status'] == 'status') {
     $form['modules_checklist_status_check'] = array(
       '#markup' => '<div class="messages ' . $check['status'] . '">' . $check['message'] . '</div>',
+      '#weight' => -100,
     );
   }
 
-  $form['check_all'] = array(
+  $form['modules_checklist_config'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Config generation'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['modules_checklist_config']['check_all'] = array(
     '#type' => 'radios',
     '#title' => t('Set all enabled modules as'),
     '#options' => array(
@@ -32,15 +41,20 @@ function modules_checklist_settings_form() {
     '#default_value' => 0,
   );
 
-  $form['uncheck_disabled'] = array(
+  $form['modules_checklist_config']['uncheck_disabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Uncheck/exclude all disabled modules'),
     '#default_value' => 0,
   );
 
-  $form['modules_checklist'] = array(
+  $form['modules_checklist_config']['reset'] = array(
+    '#type' => 'submit',
+    '#value' => t('Reset to the config values'),
+  );
+
+  $form['modules_checklist_config']['modules_checklist'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Available modules'),
+    '#title' => t('Configuration status'),
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
     '#tree' => TRUE,
@@ -52,7 +66,7 @@ function modules_checklist_settings_form() {
     $module_is_optional = (int) (is_array($optional_modules) && in_array($module_machine_name, $optional_modules));
     $module_is_disabled = (int) !$module_is_required && !$module_is_optional;
 
-    $form['modules_checklist']['modules'][$module_machine_name]['required'] = array(
+    $form['modules_checklist_config']['modules_checklist']['modules'][$module_machine_name]['required'] = array(
       '#type' => 'radio',
       '#default_value' => $module_is_required,
       '#attributes' => array(
@@ -63,7 +77,7 @@ function modules_checklist_settings_form() {
       ),
     );
 
-    $form['modules_checklist']['modules'][$module_machine_name]['optional'] = array(
+    $form['modules_checklist_config']['modules_checklist']['modules'][$module_machine_name]['optional'] = array(
       '#type' => 'radio',
       '#default_value' => $module_is_optional,
       '#attributes' => array(
@@ -74,7 +88,7 @@ function modules_checklist_settings_form() {
       ),
     );
 
-    $form['modules_checklist']['modules'][$module_machine_name]['disabled'] = array(
+    $form['modules_checklist_config']['modules_checklist']['modules'][$module_machine_name]['disabled'] = array(
       '#type' => 'radio',
       '#default_value' => $module_is_disabled,
       '#attributes' => array(
@@ -85,20 +99,49 @@ function modules_checklist_settings_form() {
       ),
     );
 
-    $form['modules_checklist']['modules'][$module_machine_name]['enabled'] = array(
+    $form['modules_checklist_config']['modules_checklist']['modules'][$module_machine_name]['enabled'] = array(
       '#markup' => $module->status ?
         '<span class="enabled">' . t('enabled') . '</span>' : '<span class="disabled">' . t('disabled') . '</span>',
     );
 
-    $form['modules_checklist']['modules'][$module_machine_name]['label'] = array(
+    $form['modules_checklist_config']['modules_checklist']['modules'][$module_machine_name]['label'] = array(
       '#markup' => '<strong>' . $module->info['name'] . '</strong> [' . $module_machine_name . ']',
     );
   }
 
-  $form['generate_required'] = array(
+  $form['modules_checklist_config']['modules_checklist_generate_config'] = array(
     '#type' => 'submit',
     '#value' => t(MODULE_CHECKLIST_GENERATE_BUTTON_TEXT),
     '#submit' => array('modules_checklist_settings_form_generate_config'),
+  );
+
+  $form['modules_checklist_notification'] = array(
+    '#title' => t('Email notification'),
+    '#type' => 'fieldset',
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+  );
+
+  $form['modules_checklist_notification']['enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable email notification for the required modules'),
+    '#description' => t('Enables email notification triggering by disabling, uninstallation, enabling, installation of any required module.'),
+    '#default_value' => '',
+  );
+
+  $form['modules_checklist_notification']['to'] = array(
+    '#title' => t('To'),
+    '#type' => 'textfield',
+    '#description' => t('Enter comma separated email addresses of the recipients.'),
+    '#default_value' => $superadmin->mail,
+  );
+
+  $form['modules_checklist_notification']['body'] = array(
+    '#title' => t('Message'),
+    '#type' => 'textarea',
+    '#description' => t('Enter the content of the email.'),
+    '#default_value' => '',
   );
 
   $form['#attached']['css'][] = drupal_get_path('module', 'modules_checklist') . '/modules_checklist.css';

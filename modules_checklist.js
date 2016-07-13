@@ -29,14 +29,16 @@
       $('#modules-checklist-settings-form input#edit-uncheck-disabled').click(function() {
         if ($(this).attr('checked')) {
           $('#modules_checklist_table input[data-enabled="disabled"]').removeAttr('checked');
+          $('#modules_checklist_table input[data-status="disabled"]').removeAttr('checked');
         }
         else {
           $('#modules_checklist_table input[data-checked="1"][data-enabled="disabled"]').attr('checked', 'checked');
         }
       });
 
-      $('#modules_checklist_table input[data-checked="1"]').click();
-
+      /**
+       * Adds behavior similar to native Drupal 'radios' form item.
+       */
       $('#modules_checklist_table .form-type-radio input').click(function() {
         var radios = $(this).closest('tr').find('.form-type-radio input');
         var targetId = $(this).attr('id');
@@ -49,6 +51,12 @@
           }
         }
       })
+
+      /**
+       * Checks all modules added to the config.
+       */
+      $('#modules_checklist_table input[data-checked="1"]').click();
     }
+
   }
 })(jQuery);
