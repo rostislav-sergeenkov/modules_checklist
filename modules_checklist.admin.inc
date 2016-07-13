@@ -128,20 +128,45 @@ function modules_checklist_settings_form() {
     '#title' => t('Enable email notification for the required modules'),
     '#description' => t('Enables email notification triggering by disabling, uninstallation, enabling, installation of any required module.'),
     '#default_value' => '',
+    '#attributes' => array(
+      'class' => array('modules_checklist_notification_enabled'),
+    ),
   );
 
   $form['modules_checklist_notification']['to'] = array(
-    '#title' => t('To'),
+    '#title' => t('To') . ' <span class="form-required" title="' . t('This field is required.') . '">*</span>',
     '#type' => 'textfield',
     '#description' => t('Enter comma separated email addresses of the recipients.'),
     '#default_value' => $superadmin->mail,
+    '#states' => array(
+      'visible' => array(
+        ':input.modules_checklist_notification_enabled' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+  $form['modules_checklist_notification']['subject'] = array(
+    '#title' => t('Subject') . ' <span class="form-required" title="' . t('This field is required.') . '">*</span>',
+    '#type' => 'textfield',
+    '#description' => t('Enter the subject of the email.'),
+    '#default_value' => '',
+    '#states' => array(
+      'visible' => array(
+        ':input.modules_checklist_notification_enabled' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $form['modules_checklist_notification']['body'] = array(
-    '#title' => t('Message'),
+    '#title' => t('Message') . ' <span class="form-required" title="' . t('This field is required.') . '">*</span>',
     '#type' => 'textarea',
     '#description' => t('Enter the content of the email.'),
     '#default_value' => '',
+    '#states' => array(
+      'visible' => array(
+        ':input.modules_checklist_notification_enabled' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $form['#attached']['css'][] = drupal_get_path('module', 'modules_checklist') . '/modules_checklist.css';

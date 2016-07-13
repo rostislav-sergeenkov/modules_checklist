@@ -7,10 +7,9 @@
 
 // ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
-// @todo add email notification on required module actions.
+// @todo add email notification on required module actions and implement email validation. @see https://html-and-cms.com/blog/drupal/send-mail-form-submit-drupal-7-token-support
 // @todo fix status check on the admin page and report page. Create one function for this purpose (modules_checklist_status_check()).
 // @todo module can be: installed, enabled, disabled, uninstalled, physically removed. Test all 5 situations.
-// @todo add warning message on manual enabling/disabling the required module using UI.
 // @todo double check and then clean up all @todos.
 
 // -- release action items ---
@@ -92,6 +91,153 @@ function modules_checklist_init() {
 }
 
 /**
+ * Implements hook_modules_installed().
+ */
+function modules_checklist_modules_installed($modules) {
+  $module_names = array_keys(modules_checklist_map_module_names($modules));
+
+}
+
+/**
+ * Implements hook_modules_enabled().
+ */
+function modules_checklist_modules_enabled($modules) {
+  $module_names = array_keys(modules_checklist_map_module_names($modules));
+
+}
+
+/**
+ * Implements hook_modules_disabled().
+ */
+function modules_checklist_modules_disabled($modules) {
+  $module_names = array_keys(modules_checklist_map_module_names($modules));
+//  drupal_mail();
+}
+
+/**
+ * Implements hook_modules_uninstalled().
+ */
+function modules_checklist_modules_uninstalled($modules) {
+  $module_names = array_keys(modules_checklist_map_module_names($modules));
+
+}
+
+function modules_checklist_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'system_modules') {
+    array_unshift($form['#submit'], 'modules_checklist_system_modules_submit');
+  }
+  elseif ($form_id == 'system_modules_uninstall') {
+    array_unshift($form['#submit'], 'modules_checklist_system_modules_uninstall_confirm');
+  }
+}
+
+/**
+ * Submit callback for the 'system_modules' page.
+ *
+ * Warns if anyone is disabling required module.
+ */
+function modules_checklist_system_modules_submit($form, &$form_state) {
+  $required_disabled_modules = array();
+  $required_enabled_modules = array();
+  $modules_data = system_rebuild_module_data();
+  $required_modules = variable_get('modules_checklist_required_modules', array());
+
+  foreach ($form_state['values']['modules'] as $package) {
+    foreach ($package as $module => $module_status) {
+      if (in_array($module, $required_modules)) {
+        $module_name = $modules_data[$module]->info['name'];
+        $module_previous_status = (bool) $modules_data[$module]->status;
+        $module_actual_status = (bool) $module_status['enable'];
+
+        // Required disabled module has been enabled.
+        if (!$module_previous_status && $module_actual_status) {
+          $required_enabled_modules[] = $module_name;
+        }
+
+        // Required enabled module has been disabled.
+        if ($module_previous_status && !$module_actual_status) {
+          $required_disabled_modules[] = $module_name;
+        }
+      }
+    }
+  }
+
+  if (!empty($required_disabled_modules)) {
+    $message = format_plural(count($required_disabled_modules),
+      'Modules Checklist. Required module (!modules) was disabled. Please enable it or !exclude from the list of required modules.',
+      'Modules Checklist. Required modules (!modules) were disabled. Please enable them or !exclude from the list of required modules.',
+      array(
+        '!modules' => implode(', ', $required_disabled_modules),
+        '!exclude' => l(t('exclude'), 'admin/config/development/modules_checklist_settings'),
+      )
+    );
+    drupal_set_message($message, 'error');
+  }
+
+  if (!empty($required_enabled_modules)) {
+    $message = format_plural(count($required_enabled_modules),
+      'Modules Checklist. Required module (!modules) was enabled.',
+      'Modules Checklist. Required modules (!modules) were enabled.',
+      array('!modules' => implode(', ', $required_enabled_modules)));
+    drupal_set_message($message, 'status');
+  }
+}
+
+/**
+ * Submit callback for the confirmation phase of 'system_modules_uninstall' form.
+ *
+ * Warns if anyone is uninstalling required module.
+ */
+function modules_checklist_system_modules_uninstall_confirm($form, &$form_state) {
+  $required_unistalled_modules = array();
+  $modules_data = system_rebuild_module_data();
+
+  foreach ($form_state['values']['uninstall'] as $module => $unistall) {
+    if ($unistall) {
+      $required_unistalled_modules[] = $modules_data[$module]->info['name'];
+    }
+  }
+
+  if (empty($form['#confirmed'])) {
+    if (!empty($required_unistalled_modules)) {
+      $message = format_plural(count($required_unistalled_modules),
+        'Modules Checklist. You are about to unistall required module (!modules) and lose its current configuration completely. Please enable it or !exclude from the list of required modules.',
+        'Modules Checklist. You are about to unistall required modules (!modules) and lose their current configuration completely. Please enable them or !exclude from the list of required modules.',
+        array(
+          '!modules' => implode(', ', $required_unistalled_modules),
+          '!exclude' => l(t('exclude'), 'admin/config/development/modules_checklist_settings'),
+        )
+      );
+    }
+  }
+  else {
+    if (!empty($required_unistalled_modules)) {
+      $message = format_plural(count($required_unistalled_modules),
+        'Modules Checklist. Required module (!modules) was unistalled. Please enable it or !exclude from the list of required modules.',
+        'Modules Checklist. Required modules (!modules) were unistalled. Please enable them or !exclude from the list of required modules.',
+        array(
+          '!modules' => implode(', ', $required_unistalled_modules),
+          '!exclude' => l(t('exclude'), 'admin/config/development/modules_checklist_settings'),
+        )
+      );
+    }
+  }
+
+  if (!empty($message)) {
+    drupal_set_message($message, 'error');
+  }
+}
+
+/**
+ * Submit callback for the submission phase of 'system_modules_uninstall' form.
+ *
+ * Warns if anyone is uninstalling required module.
+ */
+function modules_checklist_system_modules_uninstall_submit($form, &$form_state) {
+  dpm($form_state['values']);
+}
+
+/**
  * Return status information.
  *
  * @param array $modules_data
@@ -100,6 +246,7 @@ function modules_checklist_init() {
  * @return array
  */
 function modules_checklist_status_check($modules_data, $config_path) {
+  // @todo double check this function.
   $required_modules = variable_get('modules_checklist_required_modules');
   $optional_modules = variable_get('modules_checklist_optional_modules');
   $message = array('<strong>Modules Checklist status check.</strong>');
@@ -255,4 +402,22 @@ function modules_checklist_get_modules($status) {
  */
 function modules_checklist_get_uninstalled_and_deleted_label($module_machine_name) {
   return $module_machine_name . ' [' . t('uninstalled and deleted') . ']';
+}
+
+/**
+ * Returns array of module machine names mapped to module names.
+ *
+ * @param $modules
+ *
+ * @return array
+ */
+function modules_checklist_map_module_names($modules) {
+  $module_names = array();
+  $module_data = system_rebuild_module_data();
+
+  foreach ($modules as $module_machine_name) {
+    $module_names[$module_machine_name] = $module_data[$module_machine_name]->info['name'];
+  }
+
+  return $module_data;
 }
