@@ -9,12 +9,12 @@
  * Builds settings form for Modules Checklist log module.
  */
 function modules_checklist_settings_form() {
-  $superadmin = user_load(1);
   $modules_data = system_rebuild_module_data();
   $config_path = conf_path() . '/settings.php';
   $check = modules_checklist_status_check($modules_data, $config_path);
   $required_modules = variable_get('modules_checklist_required_modules');
   $optional_modules = variable_get('modules_checklist_optional_modules');
+  $notification_settings = variable_get('modules_checklist_notification', modules_checklist_get_notification_settings());
 
   if ($check['status'] == 'status') {
     $form['modules_checklist_status_check'] = array(
@@ -126,8 +126,8 @@ function modules_checklist_settings_form() {
   $form['modules_checklist_notification']['enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable email notification for the required modules'),
-    '#description' => t('Enables email notification triggering by disabling, uninstallation, enabling, installation of any required module.'),
-    '#default_value' => '',
+    '#description' => t('Enables email notification triggering by any action (disabling, uninstallation, enabling, installation) of any required module.'),
+    '#default_value' => $notification_settings['enabled'],
     '#attributes' => array(
       'class' => array('modules_checklist_notification_enabled'),
     ),
@@ -137,7 +137,7 @@ function modules_checklist_settings_form() {
     '#title' => t('To') . ' <span class="form-required" title="' . t('This field is required.') . '">*</span>',
     '#type' => 'textfield',
     '#description' => t('Enter comma separated email addresses of the recipients.'),
-    '#default_value' => $superadmin->mail,
+    '#default_value' => $notification_settings['to'],
     '#states' => array(
       'visible' => array(
         ':input.modules_checklist_notification_enabled' => array('checked' => TRUE),
@@ -149,7 +149,7 @@ function modules_checklist_settings_form() {
     '#title' => t('Subject') . ' <span class="form-required" title="' . t('This field is required.') . '">*</span>',
     '#type' => 'textfield',
     '#description' => t('Enter the subject of the email.'),
-    '#default_value' => '',
+    '#default_value' => $notification_settings['subject'],
     '#states' => array(
       'visible' => array(
         ':input.modules_checklist_notification_enabled' => array('checked' => TRUE),
@@ -161,7 +161,7 @@ function modules_checklist_settings_form() {
     '#title' => t('Message') . ' <span class="form-required" title="' . t('This field is required.') . '">*</span>',
     '#type' => 'textarea',
     '#description' => t('Enter the content of the email.'),
-    '#default_value' => '',
+    '#default_value' => $notification_settings['body'],
     '#states' => array(
       'visible' => array(
         ':input.modules_checklist_notification_enabled' => array('checked' => TRUE),
@@ -172,7 +172,38 @@ function modules_checklist_settings_form() {
   $form['#attached']['css'][] = drupal_get_path('module', 'modules_checklist') . '/modules_checklist.css';
   $form['#attached']['js'][] = drupal_get_path('module', 'modules_checklist') . '/modules_checklist.js';
 
+  $form['#validate'][] = 'modules_checklist_settings_form_validate';
+
   return system_settings_form($form);
+}
+
+/**
+ * Validate handler for the "Generate" button of modules_checklist_settings_form().
+ */
+function modules_checklist_settings_form_validate($form, &$form_state) {
+  if ($form_state['values']['modules_checklist_notification']['enabled']) {
+    if (empty($form_state['values']['modules_checklist_notification']['to'])) {
+      form_set_error('modules_checklist_notification][to', t('Please fill in required "To" field.'));
+    }
+    else {
+      $mails = explode(',', $form_state['values']['modules_checklist_notification']['to']);
+
+      foreach ($mails as $mail) {
+        if (!valid_email_address(trim($mail))) {
+          form_set_error('modules_checklist_notification][to', t('The syntax of the given e-mail address/addresses is invalid. Enter comma separated valid email addresses.'));
+          break;
+        }
+      }
+    }
+
+    if (empty($form_state['values']['modules_checklist_notification']['subject'])) {
+      form_set_error('modules_checklist_notification][subject', t('Please fill in required "Subject" field.'));
+    }
+
+    if (empty($form_state['values']['modules_checklist_notification']['body'])) {
+      form_set_error('modules_checklist_notification][body', t('Please fill in required "Body" field.'));
+    }
+  }
 }
 
 /**
@@ -265,47 +296,4 @@ function modules_checklist_get_checked_modules($modules) {
   }
 
   return $module_list;
-}
-
-/**
- * Renders table on the Modules Checklist settings page.
- *
- * @return string
- */
-function theme_modules_checklist_table($variables) {
-  $modules = $variables['form']['modules'];
-  $header = array(
-    t('config: required'),
-    t('config: optional'),
-    t('config: disabled'),
-    t('module status'),
-    t('module'),
-  );
-
-  $rows = array();
-
-  foreach ($modules as $module_machine_name => $module_options) {
-    if (is_array($module_options)) {
-      $module_elements = element_children($module_options);
-      $row = array();
-
-      foreach ($module_elements as $value) {
-        if (is_string($value)) {
-          $row[] = drupal_render($modules[$module_machine_name][$value]);
-        }
-      }
-
-      $rows[] = $row;
-    }
-  }
-
-  return theme('table',
-    array(
-      'header' => $header,
-      'rows' => $rows,
-      'attributes' => array(
-        'id' => array('modules_checklist_table'),
-      ),
-    )
-  );
 }

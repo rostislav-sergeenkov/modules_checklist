@@ -7,7 +7,7 @@
 
 // ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
-// @todo add email notification on required module actions and implement email validation. @see https://html-and-cms.com/blog/drupal/send-mail-form-submit-drupal-7-token-support
+// @todo add email notification on required module actions, implement custom tokens. @see https://html-and-cms.com/blog/drupal/send-mail-form-submit-drupal-7-token-support
 // @todo fix status check on the admin page and report page. Create one function for this purpose (modules_checklist_status_check()).
 // @todo module can be: installed, enabled, disabled, uninstalled, physically removed. Test all 5 situations.
 // @todo double check and then clean up all @todos.
@@ -95,7 +95,7 @@ function modules_checklist_init() {
  */
 function modules_checklist_modules_installed($modules) {
   $module_names = array_keys(modules_checklist_map_module_names($modules));
-
+  modules_checklist_send_mail($module_names, 'installed');
 }
 
 /**
@@ -103,7 +103,7 @@ function modules_checklist_modules_installed($modules) {
  */
 function modules_checklist_modules_enabled($modules) {
   $module_names = array_keys(modules_checklist_map_module_names($modules));
-
+  modules_checklist_send_mail($module_names, 'enabled');
 }
 
 /**
@@ -111,7 +111,7 @@ function modules_checklist_modules_enabled($modules) {
  */
 function modules_checklist_modules_disabled($modules) {
   $module_names = array_keys(modules_checklist_map_module_names($modules));
-//  drupal_mail();
+  modules_checklist_send_mail($module_names, 'disabled');
 }
 
 /**
@@ -119,9 +119,22 @@ function modules_checklist_modules_disabled($modules) {
  */
 function modules_checklist_modules_uninstalled($modules) {
   $module_names = array_keys(modules_checklist_map_module_names($modules));
-
+  modules_checklist_send_mail($module_names, 'uninstalled');
 }
 
+/**
+ * Implements hook_mail().
+ */
+function modules_checklist_mail($key, &$message, $params) {
+  if ($key == 'modules_checklist_notification') {
+    $message['subject'] = $params['subject'];
+    $message['body'] = $params['body'];
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
 function modules_checklist_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'system_modules') {
     array_unshift($form['#submit'], 'modules_checklist_system_modules_submit');
@@ -420,4 +433,94 @@ function modules_checklist_map_module_names($modules) {
   }
 
   return $module_data;
+}
+
+/**
+ * Sends email regarding enabled/disabled required modules.
+ *
+ * @param $modules
+ * @param $action
+ */
+function modules_checklist_send_mail($modules, $action) {
+  if (!empty($modules)) {
+    global $user;
+    global $base_url;
+    $settings = variable_get('modules_checklist_notification', modules_checklist_get_notification_settings());
+
+    $data = array(
+      'user' => $user,
+      'modules' => array('list' => implode(', ', $modules)),
+      'site' => array('url' => $base_url),
+    );
+    $params = array(
+      'subject' => token_replace($settings['subject'], $data),
+      'body' => array(token_replace($settings['body'], $data)),
+    );
+
+    drupal_mail('modules_checklist', 'modules_checklist_notification', $settings['to'], language_default(), $params, variable_get('site_mail', ini_get('sendmail_from')));
+  }
+}
+
+/**
+ * Returns default notification settings.
+ *
+ * @return array
+ */
+function modules_checklist_get_notification_settings() {
+  $superadmin = user_load(1);
+  $body = array(
+    'Required modules ([modules:list]) were !action by [user:name] ([user:mail], IP [user:ip]).',
+    'Date: [site-date-small].',
+    'More information on [site:site-url]/admin/reports/modules_checklist_log.',
+  );
+
+  return array(
+    'enabled' => 0,
+    'to' => $superadmin->mail,
+    'subject' => '[site:name]: Modules Checklist notification',
+    'body' => implode("\r\n\r\n", $body),
+  );
+}
+
+/**
+ * Renders table on the Modules Checklist settings page.
+ *
+ * @return string
+ */
+function theme_modules_checklist_table($variables) {
+  $modules = $variables['form']['modules'];
+  $header = array(
+    t('config: required'),
+    t('config: optional'),
+    t('config: disabled'),
+    t('module status'),
+    t('module'),
+  );
+
+  $rows = array();
+
+  foreach ($modules as $module_machine_name => $module_options) {
+    if (is_array($module_options)) {
+      $module_elements = element_children($module_options);
+      $row = array();
+
+      foreach ($module_elements as $value) {
+        if (is_string($value)) {
+          $row[] = drupal_render($modules[$module_machine_name][$value]);
+        }
+      }
+
+      $rows[] = $row;
+    }
+  }
+
+  return theme('table',
+    array(
+      'header' => $header,
+      'rows' => $rows,
+      'attributes' => array(
+        'id' => array('modules_checklist_table'),
+      ),
+    )
+  );
 }
