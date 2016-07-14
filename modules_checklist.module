@@ -8,12 +8,10 @@
 // ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
 // @todo create step-by-step instruction how to use the module on config page explaining the difference between required and optional modules.
-// @todo output config generation text as a form item, add a scroll bar.
-// @todo check user_access('configure modules_checklist settings') before outputting the link. Create and use separate function for that.
+// @todo check user_access('configure modules_checklist settings') before outputting the link to UI. Create and use separate function for that.
 
 // @todo test email notification using drush.
 // @todo test all 5 situations: module can be: installed, enabled, disabled, uninstalled, physically removed.
-// @todo double check and then clean up all @todos.
 
 // -- release action items ---
 // @todo update README.txt file
@@ -533,39 +531,6 @@ function modules_checklist_get_module_names($modules) {
   }
 
   return $module_names;
-}
-
-/**
- * Returns array of human readable names of modules according to their status.
- *
- * @param string $status
- * @todo document possible $type
- *
- * @return array|null
- */
-function modules_checklist_get_modules($status) {
-  switch ($status) {
-    case 'enabled':
-      $modules = array_keys(module_list());
-      break;
-    case 'required':
-      $modules = variable_get('modules_checklist_required_modules', array());
-      break;
-      // @todo implement logic for optional modules.
-    case 'optional':
-      $modules = variable_get('modules_checklist_optional_modules', array());
-      break;
-    default:
-      $modules = array();
-  }
-
-  if (!empty($modules)) {
-    sort($modules);
-
-    return modules_checklist_get_module_names($modules);
-  }
-
-  return $modules;
 }
 
 /**

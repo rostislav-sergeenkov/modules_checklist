@@ -321,7 +321,7 @@ function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
       '#description' => t('Removes !entries from the database. Relies on cron run.',
         array('!entries' => l(t('"Modules Checklist" log entries'), 'admin/reports/modules_checklist_log'))),
       '#default_value' => variable_get('modules_checklist_log_rotation_enabled', MODULES_CHECKLIST_LOG_DEFAULT_ROTATION_STATUS),
-      '#weight' => -30,
+      '#weight' => 29,
     );
 
     $form['modules_checklist_log_rotation_period'] = array(
@@ -335,7 +335,7 @@ function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
           ':input[name=modules_checklist_log_rotation_enabled]' => array('checked' => TRUE),
         ),
       ),
-      '#weight' => -29,
+      '#weight' => 30,
     );
   }
 }

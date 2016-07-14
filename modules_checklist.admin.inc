@@ -8,17 +8,33 @@
 /**
  * Builds settings form for Modules Checklist log module.
  */
-function modules_checklist_settings_form() {
+function modules_checklist_settings_form($form, &$form_state) {
   $modules_data = system_rebuild_module_data();
-  $check = modules_checklist_status_check($modules_data);
   $required_modules = variable_get('modules_checklist_required_modules');
   $optional_modules = variable_get('modules_checklist_optional_modules');
   $notification_settings = variable_get('modules_checklist_notification', modules_checklist_get_notification_settings());
 
-  $form['modules_checklist_status_check'] = array(
-    '#markup' => '<div class="messages ' . $check['status'] . '">' . $check['message'] . '</div>',
-    '#weight' => -100,
-  );
+  if (!empty($form_state['storage']['config_content'])) {
+    $form['modules_checklist_config_value'] = array(
+      '#title' => t('Copy the code below and paste it into !file.',
+        array('!file' => conf_path() . '/settings.php')),
+      '#type' => 'textarea',
+      '#rows' => 25,
+      '#default_value' => $form_state['storage']['config_content'],
+      '#attributes' => array(
+        'class' => array('modules_checklist_config_value'),
+      ),
+      '#weight' => -100,
+    );
+  }
+  else {
+    $check = modules_checklist_status_check($modules_data);
+
+    $form['modules_checklist_status_check'] = array(
+      '#markup' => '<div class="messages ' . $check['status'] . '">' . $check['message'] . '</div>',
+      '#weight' => -90,
+    );
+  }
 
   $form['modules_checklist_config'] = array(
     '#type' => 'fieldset',
@@ -211,6 +227,7 @@ function modules_checklist_settings_form_generate_config($form, &$form_state) {
     'required' => array(),
     'optional' => array(),
   );
+  $config_content = array();
   $required_modules = array();
   $optional_modules = array();
   $disabled_modules = array();
@@ -242,9 +259,11 @@ function modules_checklist_settings_form_generate_config($form, &$form_state) {
   }
 
   foreach ($messages as $type => $data) {
-    $config = modules_checklist_get_modules_config_content($data, $type);
-    drupal_set_message($config, 'status', FALSE);
+    $config_content[] = modules_checklist_get_modules_config_content($data, $type);
   }
+
+  $form_state['storage']['config_content'] = implode("\r\n", $config_content);
+  $form_state['rebuild'] = TRUE;
 }
 
 /**
@@ -260,15 +279,15 @@ function modules_checklist_get_modules_config_content($modules, $flag) {
 
   if (!empty($flag)) {
     $config_path = conf_path() . '/settings.php';
-    $header = t('Modules Checklist: !flag modules. Copy the code below and paste it into !file file.',
+    $header = t('Modules Checklist: !flag modules.',
       array('!file' => $config_path, '!flag' => $flag));
-    $output = '<strong>// ' . $header . '</strong><br/>';
-    $output .= '$conf[' . "'modules_checklist_" . $flag . "_modules'" . '] = array(<br/>';
+    $output = "// " . $header . "\r\n";
+    $output .= '$conf[' . "'modules_checklist_" . $flag . "_modules'" . '] = array(' . "\r\n";
     $checked_modules = modules_checklist_get_checked_modules($modules);
 
     foreach ($checked_modules as $module_machine_name => $module_name) {
-      $output .= '&#160;&#160;// "' . $module_name . '".<br/>';
-      $output .= "&#160;&#160;'" . $module_machine_name . "',<br/>";
+      $output .= "  // " . $module_name . ".\r\n";
+      $output .= "  " . $module_machine_name . ",\r\n";
     }
 
     $output .= ');';

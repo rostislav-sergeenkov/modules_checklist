@@ -39,3 +39,14 @@
   float: left;
   margin-right: 30px;
 }
+
+#modules-checklist-settings-form .modules_checklist_config_value {
+  font: normal 0.85em Courier;
+  background: #f8fff0;
+  border-right: 1px solid #cccccc;
+  border-radius: 4px;
+  padding: 10px;
+  -khtml-border-radius: 4px;
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
