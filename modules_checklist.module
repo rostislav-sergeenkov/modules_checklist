@@ -7,9 +7,12 @@
 
 // ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
-// @todo add email notification on required module actions, implement custom tokens. @see https://html-and-cms.com/blog/drupal/send-mail-form-submit-drupal-7-token-support
-// @todo fix status check on the admin page and report page. Create one function for this purpose (modules_checklist_status_check()).
-// @todo module can be: installed, enabled, disabled, uninstalled, physically removed. Test all 5 situations.
+// @todo create step-by-step instruction how to use the module on config page explaining the difference between required and optional modules.
+// @todo output config generation text as a form item, add a scroll bar.
+// @todo check user_access('configure modules_checklist settings') before outputting the link. Create and use separate function for that.
+
+// @todo test email notification using drush.
+// @todo test all 5 situations: module can be: installed, enabled, disabled, uninstalled, physically removed.
 // @todo double check and then clean up all @todos.
 
 // -- release action items ---
@@ -70,56 +73,131 @@ function modules_checklist_menu() {
 }
 
 /**
- * Implements hook_init().
+ * Implements hook_token_info().
  */
-function modules_checklist_init() {
-  if (current_path() != 'admin/reports/status') {
-    if (user_access('configure modules_checklist settings')) {
-      $check_status = modules_checklist_status_check(system_rebuild_module_data(), conf_path() . '/settings.php');
+function modules_checklist_token_info() {
+  return array(
+    'tokens' => array(
+      'modules_checklist' => array(
+        'modules' => array(
+          'name' => t('List of modules'),
+          'description' => t('Returns the list of modules (installed, enabled etc).'),
+        ),
+        'config_url' => array(
+          'name' => t('URL of the configuration page'),
+          'description' => t('URL of "Module Checklist" configuration page.'),
+        ),
+        'action' => array(
+          'name' => t('Action on a module'),
+          'description' => t('Returns the name of the action on a module (installed, enabled etc).'),
+        ),
+      ),
+      'current-date' => array(
+        'modules_checklist_format' => array(
+          'name' => t('Date of the event'),
+          'description' => t('Returns date of the event in the format defined by "Modules Checklist".'),
+        ),
+      ),
+      'current-user' => array(
+        'ip-address' => array(
+          'name' => t('IP address'),
+          'description' => t('IP address of the current user.'),
+        ),
+      ),
+    ),
+  );
+}
 
-      if (in_array($check_status['status'], array('warning', 'error'))) {
-        $prefix = t('Please !configure Modules Checklist module.',
-          array(
-            '!configure' => l(t('configure'), 'admin/config/development/modules_checklist_settings'),
-          )
-        );
-        $message = $prefix . '<br />' . $check_status['message'];
-        drupal_set_message($message, $check_status['status'], FALSE);
+/**
+ * Implements hook_tokens().
+ */
+function modules_checklist_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  $replacements = array();
+
+  if ($type == 'current-user') {
+    global $user;
+
+    foreach ($tokens as $name => $original) {
+      if ($name == 'ip-address') {
+        $replacements[$original] = $user->hostname;
       }
     }
   }
+  elseif ($type == 'current-date') {
+    foreach ($tokens as $name => $original) {
+      if ($name == 'modules_checklist_format') {
+        $replacements[$original] = date('m/d/Y H:i', REQUEST_TIME);
+      }
+    }
+  }
+  elseif ($type == 'modules_checklist') {
+    foreach ($tokens as $name => $original) {
+      if ($name == 'modules') {
+        if (!empty($data['modules_checklist']['modules'])) {
+          $replacements[$original] = $data['modules_checklist']['modules'];
+        }
+        else {
+          $replacements[$original] = '';
+        }
+      }
+      elseif ($name == 'action') {
+        if (!empty($data['modules_checklist']['action'])) {
+          $replacements[$original] = $data['modules_checklist']['action'];
+        }
+        else {
+          $replacements[$original] = '';
+        }
+      }
+      elseif ($name == 'config_url') {
+        $replacements[$original] = url('admin/config/development/modules_checklist_settings',
+          array('absolute' => TRUE));
+      }
+    }
+  }
+
+  return $replacements;
 }
 
 /**
  * Implements hook_modules_installed().
  */
 function modules_checklist_modules_installed($modules) {
-  $module_names = array_keys(modules_checklist_map_module_names($modules));
-  modules_checklist_send_mail($module_names, 'installed');
+  modules_checklist_notify($modules, 'installed');
 }
 
 /**
  * Implements hook_modules_enabled().
  */
 function modules_checklist_modules_enabled($modules) {
-  $module_names = array_keys(modules_checklist_map_module_names($modules));
-  modules_checklist_send_mail($module_names, 'enabled');
+  modules_checklist_notify($modules, 'enabled');
+
+  $modules_data = system_rebuild_module_data();
+  $status = modules_checklist_status_check($modules_data);
+
+  if ($status['status'] != 'status') {
+    drupal_set_message($status['message'], $status['status']);
+  }
 }
 
 /**
  * Implements hook_modules_disabled().
  */
 function modules_checklist_modules_disabled($modules) {
-  $module_names = array_keys(modules_checklist_map_module_names($modules));
-  modules_checklist_send_mail($module_names, 'disabled');
+  modules_checklist_notify($modules, 'disabled');
+
+  $modules_data = system_rebuild_module_data();
+  $status = modules_checklist_status_check($modules_data);
+
+  if ($status['status'] != 'status') {
+    drupal_set_message($status['message'], $status['status']);
+  }
 }
 
 /**
  * Implements hook_modules_uninstalled().
  */
 function modules_checklist_modules_uninstalled($modules) {
-  $module_names = array_keys(modules_checklist_map_module_names($modules));
-  modules_checklist_send_mail($module_names, 'uninstalled');
+  modules_checklist_notify($modules, 'unistalled');
 }
 
 /**
@@ -155,21 +233,23 @@ function modules_checklist_system_modules_submit($form, &$form_state) {
   $modules_data = system_rebuild_module_data();
   $required_modules = variable_get('modules_checklist_required_modules', array());
 
-  foreach ($form_state['values']['modules'] as $package) {
-    foreach ($package as $module => $module_status) {
-      if (in_array($module, $required_modules)) {
-        $module_name = $modules_data[$module]->info['name'];
-        $module_previous_status = (bool) $modules_data[$module]->status;
-        $module_actual_status = (bool) $module_status['enable'];
+  if (!empty($form_state['values']['modules'])) {
+    foreach ($form_state['values']['modules'] as $package) {
+      foreach ($package as $module => $module_status) {
+        if (in_array($module, $required_modules)) {
+          $module_name = $modules_data[$module]->info['name'];
+          $module_previous_status = (bool) $modules_data[$module]->status;
+          $module_actual_status = (bool) $module_status['enable'];
 
-        // Required disabled module has been enabled.
-        if (!$module_previous_status && $module_actual_status) {
-          $required_enabled_modules[] = $module_name;
-        }
+          // Required disabled module has been enabled.
+          if (!$module_previous_status && $module_actual_status) {
+            $required_enabled_modules[] = $module_name;
+          }
 
-        // Required enabled module has been disabled.
-        if ($module_previous_status && !$module_actual_status) {
-          $required_disabled_modules[] = $module_name;
+          // Required enabled module has been disabled.
+          if ($module_previous_status && !$module_actual_status) {
+            $required_disabled_modules[] = $module_name;
+          }
         }
       }
     }
@@ -177,11 +257,12 @@ function modules_checklist_system_modules_submit($form, &$form_state) {
 
   if (!empty($required_disabled_modules)) {
     $message = format_plural(count($required_disabled_modules),
-      'Modules Checklist. Required module (!modules) was disabled. Please enable it or !exclude from the list of required modules.',
-      'Modules Checklist. Required modules (!modules) were disabled. Please enable them or !exclude from the list of required modules.',
+      'Modules Checklist. Required module (!modules) was disabled. Please !enable it or !exclude from the list of required modules.',
+      'Modules Checklist. Required modules (!modules) were disabled. Please !enable them or !exclude from the list of required modules.',
       array(
         '!modules' => implode(', ', $required_disabled_modules),
         '!exclude' => l(t('exclude'), 'admin/config/development/modules_checklist_settings'),
+        '!enable' => l(t('enable'), 'admin/modules'),
       )
     );
     drupal_set_message($message, 'error');
@@ -214,10 +295,11 @@ function modules_checklist_system_modules_uninstall_confirm($form, &$form_state)
   if (empty($form['#confirmed'])) {
     if (!empty($required_unistalled_modules)) {
       $message = format_plural(count($required_unistalled_modules),
-        'Modules Checklist. You are about to unistall required module (!modules) and lose its current configuration completely. Please enable it or !exclude from the list of required modules.',
-        'Modules Checklist. You are about to unistall required modules (!modules) and lose their current configuration completely. Please enable them or !exclude from the list of required modules.',
+        'Modules Checklist. You are about to unistall required module (!modules) and lose its current configuration completely. Please !enable it or !exclude from the list of required modules.',
+        'Modules Checklist. You are about to unistall required modules (!modules) and lose their current configuration completely. Please !enable them or !exclude from the list of required modules.',
         array(
           '!modules' => implode(', ', $required_unistalled_modules),
+          '!enable' => l(t('enable'), 'admin/modules'),
           '!exclude' => l(t('exclude'), 'admin/config/development/modules_checklist_settings'),
         )
       );
@@ -226,10 +308,11 @@ function modules_checklist_system_modules_uninstall_confirm($form, &$form_state)
   else {
     if (!empty($required_unistalled_modules)) {
       $message = format_plural(count($required_unistalled_modules),
-        'Modules Checklist. Required module (!modules) was unistalled. Please enable it or !exclude from the list of required modules.',
-        'Modules Checklist. Required modules (!modules) were unistalled. Please enable them or !exclude from the list of required modules.',
+        'Modules Checklist. Required module (!modules) was unistalled. Please !enable it or !exclude from the list of required modules.',
+        'Modules Checklist. Required modules (!modules) were unistalled. Please !enable them or !exclude from the list of required modules.',
         array(
           '!modules' => implode(', ', $required_unistalled_modules),
+          '!enable' => l(t('enable'), 'admin/modules'),
           '!exclude' => l(t('exclude'), 'admin/config/development/modules_checklist_settings'),
         )
       );
@@ -242,112 +325,191 @@ function modules_checklist_system_modules_uninstall_confirm($form, &$form_state)
 }
 
 /**
- * Submit callback for the submission phase of 'system_modules_uninstall' form.
+ * Sends email about any action on required module.
  *
- * Warns if anyone is uninstalling required module.
+ * @param $modules
  */
-function modules_checklist_system_modules_uninstall_submit($form, &$form_state) {
-  dpm($form_state['values']);
-}
+function modules_checklist_notify($modules, $type) {
+  $notification_settings = variable_get('modules_checklist_notification', modules_checklist_get_notification_settings());
+
+  if ($notification_settings['enabled']) {
+    $affected_modules = array();
+    $required_modules = variable_get('modules_checklist_required_modules', array());
+    $module_names = modules_checklist_map_module_names($modules);
+
+    foreach ($module_names as $module_machine_name => $module_name) {
+      if (in_array($module_machine_name, $required_modules)) {
+        $affected_modules[] = $module_name;
+      }
+    }
+
+    if (!empty($affected_modules)) {
+      modules_checklist_send_mail($affected_modules, $type);
+    }
+  }
+};
 
 /**
  * Return status information.
  *
  * @param array $modules_data
- * @param string $config_path
  *
  * @return array
  */
-function modules_checklist_status_check($modules_data, $config_path) {
-  // @todo double check this function.
-  $required_modules = variable_get('modules_checklist_required_modules');
-  $optional_modules = variable_get('modules_checklist_optional_modules');
+function modules_checklist_status_check($modules_data) {
+  $config_exists = TRUE;
   $message = array('<strong>Modules Checklist status check.</strong>');
 
-  if (is_array($required_modules)) {
-    $non_existent_modules = array_diff($required_modules, array_keys($modules_data));
+  $config = modules_checklist_get_configuration();
+  $config_path = conf_path() . '/settings.php';
+  $available_modules = array_keys($modules_data);
+  $enabled_modules = modules_checklist_get_enabled_modules($modules_data);
 
-    if (empty($non_existent_modules)) {
-      $message = array_merge($message, array(
-        'List of required modules is set in !file file.',
-      ));
-
-      // Either all modules from the list are available in the system.
-      return array(
-        'status' => 'status',
-        'message' => t(implode($message, '<br />'), array(
-          '!file' => $config_path,
-          )
-        ),
-      );
-    }
-    else {
-      // Or some of them have been physically removed from the file system.
-      $message = array_merge($message, array(
-        'Your !file file contains modules that no longer exist in the system: %modules.',
-        'Please click on "!button" button to skip non-existent modules and generate new list of modules.',
-        'Then update $conf[\'modules_checklist_required_modules\'] in !file file.',
-      ));
-
-      return array(
-        'status' => 'warning',
-        'message' => t(implode($message, '<br />'), array(
-            '!file' => $config_path,
-            '%modules' => implode(', ', $non_existent_modules),
-            '!button' => MODULE_CHECKLIST_GENERATE_BUTTON_TEXT,
-          )
-        ),
-      );
-    }
+  /**
+   * Checks if config (required and optional lists of modules) exist in settings.php.
+   */
+  if (!is_array($config['required_modules'])) {
+    $config_exists = FALSE;
+    $message[] = 'List of required modules wasn\'t found in !file. Please !configure the list of required modules.';
   }
-  else {
-    $message = array_merge($message, array(
-      'Select modules you wish to track and click "!button" button.',
-      'Then copy the message and paste it into !file file.',
-      'The module detects the list of modules and starts tracking if they are enabled or disabled.',
-    ));
 
+  if (!is_array($config['optional_modules'])) {
+    $config_exists = FALSE;
+    $message[] = 'List of optional modules wasn\'t found in !file. Please !configure the list of optional modules.';
+  }
+
+  if (!$config_exists) {
     return array(
       'status' => 'error',
-      'message' => t(implode($message, '<br />'), array(
-        '!button' => MODULE_CHECKLIST_GENERATE_BUTTON_TEXT,
-        '!file' => $config_path,
+      'message' => t(
+        implode($message, '<br />'), array(
+          '!configure' => l(t('set up'), 'admin/config/development/modules_checklist_settings'),
+          '!file' => $config_path,
         )
       ),
     );
   }
+
+  /**
+   * Checks if any required modules have been physically removed
+   * from the file system.
+   */
+  $non_existent_modules = array_diff($config['required_modules'], $available_modules);
+
+  if (!empty($non_existent_modules)) {
+    // Some required modules have been physically removed from the file system.
+    $message = array_merge($message, array(
+      'List of required modules in !file contains modules that no longer exist in the system: %modules.',
+      'Please !click on "!button" button to skip non-existent modules and refresh the configuration.',
+      'Then add it to the !file',
+    ));
+
+    return array(
+      'status' => 'error',
+      'message' => t(
+        implode($message, '<br />'), array(
+          '!file' => $config_path,
+          '%modules' => implode(', ', $non_existent_modules),
+          '!click' => l(t('click'), 'admin/config/development/modules_checklist_settings'),
+          '!button' => t(MODULE_CHECKLIST_GENERATE_BUTTON_TEXT),
+        )
+      ),
+    );
+  }
+
+  /**
+   * Checks if any required modules are disabled.
+   */
+  $disabled_required_modules = array_diff($config['required_modules'], $enabled_modules);
+
+  if (!empty($disabled_required_modules)) {
+    $message = array_merge($message, array(
+      'Required modules are disabled: %modules.',
+      'Please !enable them or !exclude from the list of required modules in !file.',
+    ));
+
+    return array(
+      'status' => 'error',
+      'message' => t(
+        implode($message, '<br />'), array(
+          '!file' => $config_path,
+          '%modules' => implode(', ', array_values(modules_checklist_map_module_names($disabled_required_modules))),
+          '!enable' => l(t('enable'), 'admin/modules'),
+          '!exclude' => l(t('exclude'), 'admin/config/development/modules_checklist_settings'),
+        )
+      ),
+    );
+  }
+
+  /**
+   * Checks if any module is enabled which doesn't belong
+   * to the list of required or optional modules.
+   */
+  $untracked_modules = array_diff($enabled_modules,
+    array_merge($config['required_modules'], $config['optional_modules']));
+
+  if (!empty($untracked_modules)) {
+    $message = array_merge($message, array(
+      'Some enabled modules must be !disabled: %modules.',
+      'Alternatively they can be !added to the list of required modules or to the list of optional modules.',
+    ));
+
+    return array(
+      'status' => 'warning',
+      'message' => t(
+        implode($message, '<br />'), array(
+          '!file' => $config_path,
+          '!disabled' => l(t('disabled'), 'admin/modules'),
+          '!added' => l(t('added'), 'admin/config/development/modules_checklist_settings'),
+          '%modules' => implode(', ', array_values(modules_checklist_map_module_names($untracked_modules))),
+        )
+      ),
+    );
+  }
+
+  // All is OK.
+  $message[] = 'List of required modules was found in !file.';
+  $message[] = 'List of optional modules was found in !file.';
+
+  return array(
+    'status' => 'status',
+    'message' => t(
+      implode($message, '<br />'), array(
+        '!file' => $config_path,
+      )
+    ),
+  );
 }
 
 /**
- * Returns array of missing required modules and enabled extra modules.
- *
- * Compares enabled modules with the predefined list of modules.
+ * Returns module configuration defined in settings.php.
  *
  * @return array
  */
-function modules_checklist_get_modules_status() {
-  $status = array(
-    'optional_modules' => array(),
-    'missing_modules' => array(),
-    'error_message' => '',
+function modules_checklist_get_configuration() {
+  return array(
+    'required_modules' => variable_get('modules_checklist_required_modules'),
+    'optional_modules' => variable_get('modules_checklist_optional_modules'),
   );
+}
 
-  $required_modules = modules_checklist_get_modules('required');
-  $enabled_modules = modules_checklist_get_modules('enabled');
-  $config_path = conf_path() . '/settings.php';
+/**
+ * Returns list of enabled modules.
+ *
+ * @param $available_modules
+ *
+ * @return array
+ */
+function modules_checklist_get_enabled_modules($available_modules) {
+  $enabled = array();
 
-  if (empty($required_modules)) {
-    $status['error_message'] = t('Please add the list of required modules in !file.',
-      array('!file' => $config_path));
-
-    return $status;
+  foreach ($available_modules as $module_machine_name => $module_data) {
+    if ($module_data->status) {
+      $enabled[] = $module_machine_name;
+    }
   }
 
-  // @todo update logic for optional modules.
-  $status['optional_modules'] = array_diff($enabled_modules, $required_modules);
-  $status['missing_modules'] = array_diff($required_modules, $enabled_modules);
-
-  return $status;
+  return $enabled;
 }
 
 /**
@@ -432,7 +594,7 @@ function modules_checklist_map_module_names($modules) {
     $module_names[$module_machine_name] = $module_data[$module_machine_name]->info['name'];
   }
 
-  return $module_data;
+  return $module_names;
 }
 
 /**
@@ -443,14 +605,12 @@ function modules_checklist_map_module_names($modules) {
  */
 function modules_checklist_send_mail($modules, $action) {
   if (!empty($modules)) {
-    global $user;
-    global $base_url;
     $settings = variable_get('modules_checklist_notification', modules_checklist_get_notification_settings());
-
     $data = array(
-      'user' => $user,
-      'modules' => array('list' => implode(', ', $modules)),
-      'site' => array('url' => $base_url),
+      'modules_checklist' => array(
+        'modules' => implode(', ', $modules),
+        'action' => $action,
+      ),
     );
     $params = array(
       'subject' => token_replace($settings['subject'], $data),
@@ -469,9 +629,9 @@ function modules_checklist_send_mail($modules, $action) {
 function modules_checklist_get_notification_settings() {
   $superadmin = user_load(1);
   $body = array(
-    'Required modules ([modules:list]) were !action by [user:name] ([user:mail], IP [user:ip]).',
-    'Date: [site-date-small].',
-    'More information on [site:site-url]/admin/reports/modules_checklist_log.',
+    'Required modules ([modules_checklist:modules]) were [modules_checklist:action] by [current-user:name] ([current-user:mail], IP address [current-user:ip-address]).',
+    'Date: [current-date:modules_checklist_format].',
+    'More information on [modules_checklist:config_url].',
   );
 
   return array(

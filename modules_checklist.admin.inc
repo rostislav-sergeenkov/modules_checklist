@@ -10,18 +10,15 @@
  */
 function modules_checklist_settings_form() {
   $modules_data = system_rebuild_module_data();
-  $config_path = conf_path() . '/settings.php';
-  $check = modules_checklist_status_check($modules_data, $config_path);
+  $check = modules_checklist_status_check($modules_data);
   $required_modules = variable_get('modules_checklist_required_modules');
   $optional_modules = variable_get('modules_checklist_optional_modules');
   $notification_settings = variable_get('modules_checklist_notification', modules_checklist_get_notification_settings());
 
-  if ($check['status'] == 'status') {
-    $form['modules_checklist_status_check'] = array(
-      '#markup' => '<div class="messages ' . $check['status'] . '">' . $check['message'] . '</div>',
-      '#weight' => -100,
-    );
-  }
+  $form['modules_checklist_status_check'] = array(
+    '#markup' => '<div class="messages ' . $check['status'] . '">' . $check['message'] . '</div>',
+    '#weight' => -100,
+  );
 
   $form['modules_checklist_config'] = array(
     '#type' => 'fieldset',

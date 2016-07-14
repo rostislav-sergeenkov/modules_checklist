@@ -318,7 +318,8 @@ function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
     $form['modules_checklist_log_rotation_enabled'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enable log rotation'),
-      '#description' => t('Removes the log entries from the database. Relies on cron run.'),
+      '#description' => t('Removes !entries from the database. Relies on cron run.',
+        array('!entries' => l(t('"Modules Checklist" log entries'), 'admin/reports/modules_checklist_log'))),
       '#default_value' => variable_get('modules_checklist_log_rotation_enabled', MODULES_CHECKLIST_LOG_DEFAULT_ROTATION_STATUS),
       '#weight' => -30,
     );

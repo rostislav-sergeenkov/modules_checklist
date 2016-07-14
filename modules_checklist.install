@@ -12,64 +12,23 @@ function modules_checklist_requirements($phase) {
   $requirements = array();
 
   if ($phase == 'runtime') {
-    $status = modules_checklist_get_modules_status();
-    $config_path = conf_path() . '/settings.php';
+    $modules_data = system_rebuild_module_data();
+    $status = modules_checklist_status_check($modules_data);
 
-    if (!empty($status['error_message'])) {
-      $description = $status['error_message'];
+    if ($status['status'] == 'error') {
       $severity = REQUIREMENT_ERROR;
-      $value = t('The list of required modules is not defined in !file.',
-        array('!file' => $config_path));
-
-      if (user_access('configure modules_checklist settings')) {
-        $value .= t('List of required modules can be generated on the !page.',
-          array(
-            '!page' => l(t('Modules Checklist settings page'), 'admin/config/development/modules_checklist_settings'),
-            )
-        );
-      }
     }
-    elseif (empty($status['optional_modules']) && empty($status['missing_modules'])) {
-      $severity = REQUIREMENT_OK;
-      $description = t('List of enabled modules matches with the list of required modules defined in !file.',
-        array('!file' => $config_path));
-      $value = t('OK');
+    elseif ($status['status'] == 'warning') {
+      $severity = REQUIREMENT_WARNING;
     }
     else {
-      $severity = REQUIREMENT_WARNING;
-      $description = t('Mismatch with the list of modules defined in !file was detected.',
-        array('!file' => $config_path));
-      $message = array();
-
-      if (!empty($status['missing_modules'])) {
-        $severity = REQUIREMENT_ERROR;
-        $message[] = t('Required modules must be !enabled: !missing_modules.',
-          array(
-            '!enabled' => l('enabled', 'admin/modules'),
-            '!missing_modules' => implode(', ', $status['missing_modules']),
-          )
-        );
-      }
-
-      if (!empty($status['optional_modules'])) {
-        $message[] = t('Optional modules are enabled: !optional_modules. Please !disable them or !include in a list of modules defined in !file.',
-          array(
-            '!file' => $config_path,
-            '!disable' => l('disable', 'admin/modules'),
-            '!optional_modules' => implode(', ', $status['optional_modules']),
-            '!include' => user_access('configure modules_checklist settings') ?
-              l(t('include'), 'admin/config/development/modules_checklist_settings') : 'include',
-          )
-        );
-      }
-
-      $value = implode('<br />', $message);
+      $severity = REQUIREMENT_OK;
     }
 
     $requirements['modules_checklist_status'] = array(
       'title'       => t('Modules Checklist'),
-      'description' => $description . '<br />',
-      'value'       => $value,
+      'description' => $status['message'],
+      'value'       => '',
       'severity'    => $severity,
     );
   }

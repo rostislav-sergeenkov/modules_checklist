@@ -27,14 +27,14 @@ function modules_checklist_log_schema() {
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
-        'description' => 'The {users}.uid who triggered the event.',
+        'description' => 'The UID of the user who triggered the event.',
       ),
       'ip' => array(
-        'description' => 'IP address of the user who triggered the event.',
         'type' => 'varchar',
         'length' => 40,
         'not null' => TRUE,
         'default' => '',
+        'description' => 'IP address of the user who triggered the event.',
       ),
       'type' => array(
         'type' => 'int',
