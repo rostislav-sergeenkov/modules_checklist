@@ -60,7 +60,7 @@ function modules_checklist_settings_form($form, &$form_state) {
       t('Disabled modules are unwanted modules. In theory they should be removed from the project it this is possible or at least disabled.'),
       '<strong>' . t('Click "!button" button to generate code for $conf variables.', array('!button' => MODULE_CHECKLIST_GENERATE_BUTTON_TEXT)) . '</strong>',
       '<strong>' . t('Copy the generated code and paste it into !file to complete setup.', array('!file' => conf_path() . '/settings.php')) . '</strong>',
-      '<strong>' . t('Module compares the list of enabled modules with the lists of mofules in $conf. In case of any discrepancy with the list of required or disabled modules it displays error message on !page page.',
+      '<strong>' . t('Module compares the list of enabled modules with the lists of modules in $conf. In case of any discrepancy with the list of required or disabled modules it displays error message on !page page.',
         array('!page' => l(t('Status report'), 'admin/reports/status'))) . '</strong>',
       '<strong>' . t('If "Modules Checklist log" is !enabled then you will be able to browse the history and know who installed / enabled / disabled / unistalled the module.',
         array('!enabled' => l(t('enabled'), 'admin/modules'))). '</strong>',

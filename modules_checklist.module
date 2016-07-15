@@ -7,6 +7,7 @@
 
 // ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
+// @todo move module config page to a constant
 // @todo check user_access('configure modules_checklist settings') before outputting the link to UI. Create and use separate function for that.
 
 // @todo write and test each feature of 2 modules.
@@ -14,11 +15,8 @@
 // @todo test all 5 situations: module can be: installed, enabled, disabled, uninstalled, physically removed.
 
 // -- release action items ---
-// @todo update README.txt file
 // @todo implement hook_help() for both modules.
-// @todo think how to specify correct version for the sub-module.
-// @todo create Project Page and promote the module to the permanent d.org project.
-// @todo install the module on Prod sites.
+// @todo create Project Page and promote the module to the permanent d.org project https://www.drupal.org/node/161085.
 
 // Defines text on the "Generate" button.
 define('MODULE_CHECKLIST_GENERATE_BUTTON_TEXT', 'Generate config');

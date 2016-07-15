@@ -1,5 +1,5 @@
 name = Modules Checklist
-description = Logs and records enabling and disabling modules.
+description = Compares enabled modules with defined list of required and optional modules.
 core = 7.x
 configure = admin/config/development/modules_checklist_settings
 package = Modules Checklist
