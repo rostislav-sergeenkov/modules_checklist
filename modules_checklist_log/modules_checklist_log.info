@@ -1,5 +1,5 @@
 name = Modules Checklist log
-description = Records modules_checklist events to log and provides administration UI for browsing events.
+description = Records modules_checklist events and provides administration UI for browsing module events.
 core = 7.x
 configure = admin/config/development/modules_checklist_settings
 package = Modules Checklist

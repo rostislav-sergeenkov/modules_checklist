@@ -7,9 +7,9 @@
 
 // ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
-// @todo create step-by-step instruction how to use the module on config page explaining the difference between required and optional modules.
 // @todo check user_access('configure modules_checklist settings') before outputting the link to UI. Create and use separate function for that.
 
+// @todo write and test each feature of 2 modules.
 // @todo test email notification using drush.
 // @todo test all 5 situations: module can be: installed, enabled, disabled, uninstalled, physically removed.
 
@@ -466,14 +466,21 @@ function modules_checklist_status_check($modules_data) {
   }
 
   // All is OK.
+  $optional_modules = '';
   $message[] = 'List of required modules was found in !file.';
   $message[] = 'List of optional modules was found in !file.';
+
+  if (!empty($config['optional_modules'])) {
+    $message[] = 'Optional modules are enabled: !modules.';
+    $optional_modules = implode(', ', array_values(modules_checklist_map_module_names($config['optional_modules'])));
+  }
 
   return array(
     'status' => 'status',
     'message' => t(
       implode($message, '<br />'), array(
         '!file' => $config_path,
+        '!modules' => $optional_modules,
       )
     ),
   );

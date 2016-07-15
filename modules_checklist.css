@@ -50,3 +50,15 @@
   -moz-border-radius: 4px;
   -webkit-border-radius: 4px;
 }
+
+#modules-checklist-settings-form .modules_checklist_config_description {
+  display: block;
+  background: #efefef;
+  padding: 10px;
+}
+
+#modules-checklist-settings-form .modules_checklist_config_description li {
+  font-size: 0.85em;
+  line-height: 200%;
+  margin-left: 10px;
+}

@@ -20,7 +20,7 @@ function modules_checklist_settings_form($form, &$form_state) {
         array('!file' => conf_path() . '/settings.php')),
       '#type' => 'textarea',
       '#rows' => 25,
-      '#default_value' => $form_state['storage']['config_content'],
+      '#value' => $form_state['storage']['config_content'],
       '#attributes' => array(
         'class' => array('modules_checklist_config_value'),
       ),
@@ -43,6 +43,35 @@ function modules_checklist_settings_form($form, &$form_state) {
     '#collapsed' => FALSE,
   );
 
+  $form['modules_checklist_config']['howto'] = array(
+    '#title' => '<strong>' . t('How to set up the module') . '</strong>',
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['modules_checklist_config']['howto']['manual'] = array(
+    '#theme' => 'item_list',
+    '#items' => array(
+      '<strong>' . t('Make sure you are able to modify !file for your Project.', array('!file' => conf_path() . '/settings.php')) . '</strong>',
+      '<strong>' . t('Check modules you wish to track using "Configuration" form below. Modules can be required, optional or disabled.') . '</strong>',
+      t('Required modules are important modules for the project. They must stay enabled all the time and added to $conf["modules_checklist_required_modules"].'),
+      t('Optional modules can be disabled, enabled or absent. Module just ignores them. Optional modules should be added to to $conf["modules_checklist_optional_modules"].'),
+      t('Disabled modules are unwanted modules. In theory they should be removed from the project it this is possible or at least disabled.'),
+      '<strong>' . t('Click "!button" button to generate code for $conf variables.', array('!button' => MODULE_CHECKLIST_GENERATE_BUTTON_TEXT)) . '</strong>',
+      '<strong>' . t('Copy the generated code and paste it into !file to complete setup.', array('!file' => conf_path() . '/settings.php')) . '</strong>',
+      '<strong>' . t('Module compares the list of enabled modules with the lists of mofules in $conf. In case of any discrepancy with the list of required or disabled modules it displays error message on !page page.',
+        array('!page' => l(t('Status report'), 'admin/reports/status'))) . '</strong>',
+      '<strong>' . t('If "Modules Checklist log" is !enabled then you will be able to browse the history and know who installed / enabled / disabled / unistalled the module.',
+        array('!enabled' => l(t('enabled'), 'admin/modules'))). '</strong>',
+    ),
+    '#type' => 'ol',
+    '#attributes' => array(
+      'class' => array('modules_checklist_config_description'),
+    ),
+    '#weight' => -80,
+  );
+
   $form['modules_checklist_config']['check_all'] = array(
     '#type' => 'radios',
     '#title' => t('Set all enabled modules as'),
@@ -60,14 +89,9 @@ function modules_checklist_settings_form($form, &$form_state) {
     '#default_value' => 0,
   );
 
-  $form['modules_checklist_config']['reset'] = array(
-    '#type' => 'submit',
-    '#value' => t('Reset to the config values'),
-  );
-
   $form['modules_checklist_config']['modules_checklist'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Configuration status'),
+    '#title' => t('Configuration'),
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
     '#tree' => TRUE,
@@ -126,6 +150,11 @@ function modules_checklist_settings_form($form, &$form_state) {
     '#type' => 'submit',
     '#value' => t(MODULE_CHECKLIST_GENERATE_BUTTON_TEXT),
     '#submit' => array('modules_checklist_settings_form_generate_config'),
+  );
+
+  $form['modules_checklist_config']['reset'] = array(
+    '#type' => 'submit',
+    '#value' => t('Reset to the config values'),
   );
 
   $form['modules_checklist_notification'] = array(
@@ -287,7 +316,7 @@ function modules_checklist_get_modules_config_content($modules, $flag) {
 
     foreach ($checked_modules as $module_machine_name => $module_name) {
       $output .= "  // " . $module_name . ".\r\n";
-      $output .= "  " . $module_machine_name . ",\r\n";
+      $output .= "  '" . $module_machine_name . "',\r\n";
     }
 
     $output .= ');';
