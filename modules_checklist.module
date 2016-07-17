@@ -6,15 +6,11 @@
  */
 
 // ==== RELEASE 7x-1.0. Focus on functionality.
-// -- major functionality --
-// @todo check user_access('configure modules_checklist settings') before outputting the link to UI. Create and use separate function for that.
-
 // @todo write and test each feature of 2 modules.
 // @todo test email notification using drush.
 // @todo test all 5 situations: module can be: installed, enabled, disabled, uninstalled, physically removed.
 
 // -- release action items ---
-// @todo implement hook_help() for both modules.
 // @todo create Project Page and promote the module to the permanent d.org project https://www.drupal.org/node/161085.
 
 // Defines text on the "Generate" button.
@@ -31,7 +27,7 @@ function modules_checklist_help($path, $arg) {
     $output .= '<p>' . t('Modules Checklist compares enabled modules with defined in settings.php lists of required and optional modules and warns site administrator (on the !status_page and by email) in case of any discrepancy.',
         array('!status_page' => l(t('Status report page'), 'admin/reports/status'))) . '</p>';
     $output .= '<p>' . t('It also warns if user is trying to disable required module or enable the module which should be disabled.') . '</p>';
-    $output .= '<p>' . t('See "How to set up the module" section of the !configuration_page for the detailed step by step instructions.',
+    $output .= '<p>' . t('See "How to set up the module" section of the !configuration_page for the detailed step by step instructions (requires "Configure Modules Checklist settings" permission).',
         array('!configuration_page' => l(t('configuration page'), 'admin/config/development/modules_checklist_settings'))) . '</p>';
     $output .= '<p>' . t('Use "Configuration helper" to generate $conf variables.') . '</p>';
 
@@ -264,8 +260,8 @@ function modules_checklist_system_modules_submit($form, &$form_state) {
 
   if (!empty($required_disabled_modules)) {
     $message = format_plural(count($required_disabled_modules),
-      'Modules Checklist. Required module (!modules) was disabled. Please !enable it or !exclude from the list of required modules.',
-      'Modules Checklist. Required modules (!modules) were disabled. Please !enable them or !exclude from the list of required modules.',
+      'Modules Checklist. Required module (!modules) was disabled. Please !enable it or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
+      'Modules Checklist. Required modules (!modules) were disabled. Please !enable them or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
       array(
         '!modules' => implode(', ', $required_disabled_modules),
         '!exclude' => l(t('exclude'), 'admin/config/development/modules_checklist_settings'),
@@ -302,8 +298,8 @@ function modules_checklist_system_modules_uninstall_confirm($form, &$form_state)
   if (empty($form['#confirmed'])) {
     if (!empty($required_unistalled_modules)) {
       $message = format_plural(count($required_unistalled_modules),
-        'Modules Checklist. You are about to unistall required module (!modules) and lose its current configuration completely. Please !enable it or !exclude from the list of required modules.',
-        'Modules Checklist. You are about to unistall required modules (!modules) and lose their current configuration completely. Please !enable them or !exclude from the list of required modules.',
+        'Modules Checklist. You are about to unistall required module (!modules) and lose its current configuration completely. Please !enable it or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
+        'Modules Checklist. You are about to unistall required modules (!modules) and lose their current configuration completely. Please !enable them or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
         array(
           '!modules' => implode(', ', $required_unistalled_modules),
           '!enable' => l(t('enable'), 'admin/modules'),
@@ -315,8 +311,8 @@ function modules_checklist_system_modules_uninstall_confirm($form, &$form_state)
   else {
     if (!empty($required_unistalled_modules)) {
       $message = format_plural(count($required_unistalled_modules),
-        'Modules Checklist. Required module (!modules) was unistalled. Please !enable it or !exclude from the list of required modules.',
-        'Modules Checklist. Required modules (!modules) were unistalled. Please !enable them or !exclude from the list of required modules.',
+        'Modules Checklist. Required module (!modules) was unistalled. Please !enable it or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
+        'Modules Checklist. Required modules (!modules) were unistalled. Please !enable them or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
         array(
           '!modules' => implode(', ', $required_unistalled_modules),
           '!enable' => l(t('enable'), 'admin/modules'),
