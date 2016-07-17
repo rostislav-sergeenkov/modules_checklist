@@ -2,12 +2,11 @@
 
 /**
  * @file
- * modules_checklist.module.
+ * File modules_checklist.module.
  */
 
 // ==== RELEASE 7x-1.0. Focus on functionality.
 // -- major functionality --
-// @todo move module config page to a constant
 // @todo check user_access('configure modules_checklist settings') before outputting the link to UI. Create and use separate function for that.
 
 // @todo write and test each feature of 2 modules.
@@ -19,13 +18,25 @@
 // @todo create Project Page and promote the module to the permanent d.org project https://www.drupal.org/node/161085.
 
 // Defines text on the "Generate" button.
-define('MODULE_CHECKLIST_GENERATE_BUTTON_TEXT', 'Generate config');
+define('MODULES_CHECKLIST_GENERATE_BUTTON_TEXT', 'Generate config');
 
 /**
  * Implements hook_help().
  */
 function modules_checklist_help($path, $arg) {
+  if ($path == 'admin/help#modules_checklist') {
+    $output = '<p>' . t('!module provides and maintains control over enabled modules on the project.',
+        array('!module' => '<strong>' . t('Modules Checklist') . '</strong>')) . '</p>';
+    $output .= '<p>' . t('Initially it was written for a long-term Drupal project to control and monitor hundreds of enabled modules on multiple environments (DEV, QA, Stage, Prod etc) during development.') . '</p>';
+    $output .= '<p>' . t('Modules Checklist compares enabled modules with defined in settings.php lists of required and optional modules and warns site administrator (on the !status_page and by email) in case of any discrepancy.',
+        array('!status_page' => l(t('Status report page'), 'admin/reports/status'))) . '</p>';
+    $output .= '<p>' . t('It also warns if user is trying to disable required module or enable the module which should be disabled.') . '</p>';
+    $output .= '<p>' . t('See "How to set up the module" section of the !configuration_page for the detailed step by step instructions.',
+        array('!configuration_page' => l(t('configuration page'), 'admin/config/development/modules_checklist_settings'))) . '</p>';
+    $output .= '<p>' . t('Use "Configuration helper" to generate $conf variables.') . '</p>';
 
+    return $output;
+  }
 }
 
 /**
@@ -274,7 +285,7 @@ function modules_checklist_system_modules_submit($form, &$form_state) {
 }
 
 /**
- * Submit callback for the confirmation phase of 'system_modules_uninstall' form.
+ * Submit callback for the confirmation step of 'system_modules_uninstall' form.
  *
  * Warns if anyone is uninstalling required module.
  */
@@ -323,7 +334,8 @@ function modules_checklist_system_modules_uninstall_confirm($form, &$form_state)
 /**
  * Sends email about any action on required module.
  *
- * @param $modules
+ * @param array $modules
+ * @param string $type
  */
 function modules_checklist_notify($modules, $type) {
   $notification_settings = variable_get('modules_checklist_notification', modules_checklist_get_notification_settings());
@@ -346,7 +358,7 @@ function modules_checklist_notify($modules, $type) {
 };
 
 /**
- * Return status information.
+ * Returns status information.
  *
  * @param array $modules_data
  *
@@ -356,14 +368,14 @@ function modules_checklist_status_check($modules_data) {
   $config_exists = TRUE;
   $message = array('<strong>Modules Checklist status check.</strong>');
 
+  $t = get_t();
   $config = modules_checklist_get_configuration();
   $config_path = conf_path() . '/settings.php';
   $available_modules = array_keys($modules_data);
   $enabled_modules = modules_checklist_get_enabled_modules($modules_data);
 
-  /**
-   * Checks if config (required and optional lists of modules) exist in settings.php.
-   */
+  // Checks if $conf variables (required and optional lists of modules) exist
+  // in settings.php.
   if (!is_array($config['required_modules'])) {
     $config_exists = FALSE;
     $message[] = 'List of required modules wasn\'t found in !file. Please !configure the list of required modules.';
@@ -379,17 +391,15 @@ function modules_checklist_status_check($modules_data) {
       'status' => 'error',
       'message' => t(
         implode($message, '<br />'), array(
-          '!configure' => l(t('set up'), 'admin/config/development/modules_checklist_settings'),
+          '!configure' => l($t('set up'), 'admin/config/development/modules_checklist_settings'),
           '!file' => $config_path,
         )
       ),
     );
   }
 
-  /**
-   * Checks if any required modules have been physically removed
-   * from the file system.
-   */
+  // Checks if any required modules have been removed
+  // from the file system.
   $non_existent_modules = array_diff($config['required_modules'], $available_modules);
 
   if (!empty($non_existent_modules)) {
@@ -407,15 +417,13 @@ function modules_checklist_status_check($modules_data) {
           '!file' => $config_path,
           '%modules' => implode(', ', $non_existent_modules),
           '!click' => l(t('click'), 'admin/config/development/modules_checklist_settings'),
-          '!button' => t(MODULE_CHECKLIST_GENERATE_BUTTON_TEXT),
+          '!button' => t(MODULES_CHECKLIST_GENERATE_BUTTON_TEXT),
         )
       ),
     );
   }
 
-  /**
-   * Checks if any required modules are disabled.
-   */
+  // Checks if any required modules are disabled.
   $disabled_required_modules = array_diff($config['required_modules'], $enabled_modules);
 
   if (!empty($disabled_required_modules)) {
@@ -437,10 +445,8 @@ function modules_checklist_status_check($modules_data) {
     );
   }
 
-  /**
-   * Checks if any module is enabled which doesn't belong
-   * to the list of required or optional modules.
-   */
+  // Checks if any module is enabled which doesn't belong
+  // to the list of required or optional modules.
   $untracked_modules = array_diff($enabled_modules,
     array_merge($config['required_modules'], $config['optional_modules']));
 
@@ -499,7 +505,7 @@ function modules_checklist_get_configuration() {
 /**
  * Returns list of enabled modules.
  *
- * @param $available_modules
+ * @param array $available_modules
  *
  * @return array
  */
@@ -571,15 +577,15 @@ function modules_checklist_map_module_names($modules) {
  * Sends email regarding enabled/disabled required modules.
  *
  * @param $modules
- * @param $action
+ * @param $type
  */
-function modules_checklist_send_mail($modules, $action) {
+function modules_checklist_send_mail($modules, $type) {
   if (!empty($modules)) {
     $settings = variable_get('modules_checklist_notification', modules_checklist_get_notification_settings());
     $data = array(
       'modules_checklist' => array(
         'modules' => implode(', ', $modules),
-        'action' => $action,
+        'action' => $type,
       ),
     );
     $params = array(

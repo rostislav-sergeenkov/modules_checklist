@@ -2,7 +2,7 @@
 
 /**
  * @file
- * modules_checklist_log.views_default.inc.
+ * File modules_checklist_log.views_default.inc.
  */
 
 /**

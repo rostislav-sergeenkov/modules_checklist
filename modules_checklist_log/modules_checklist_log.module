@@ -2,7 +2,7 @@
 
 /**
  * @file
- * modules_checklist_log.module.
+ * File modules_checklist_log.module.
  */
 
 // Defines the ststus of log rotation by default.
@@ -25,7 +25,14 @@ define('MODULES_CHECKLIST_LOG_STATUS_OPTIONAL', 2);
  * Implements hook_help().
  */
 function modules_checklist_log_help($path, $arg) {
+  if ($path == 'admin/help#modules_checklist_log') {
+    $output = '<p>' . t('!module records in database who and when installed / enabled / disabled / unistalled modules on the site.',
+        array('!module' => '<strong>' . t('Modules Checklist log') . '</strong>')) . '</p>';
+    $output .= '<p>' . t('Provides !admin_ui for browsing log and filtering log entries.',
+        array('!admin_ui' => l(t('Administration UI'), 'admin/reports/modules_checklist_log'))) . '</p>';
 
+    return $output;
+  }
 }
 
 /**
@@ -51,7 +58,7 @@ function modules_checklist_log_menu() {
       'page callback' => 'modules_checklist_log_page',
       'access arguments' => array('access modules_checklist log'),
       'file' => 'modules_checklist_log.page.inc',
-    )
+    ),
   );
 }
 
@@ -160,11 +167,13 @@ function modules_checklist_log_views_api() {
  * Implements hook_views_data_alter().
  */
 function modules_checklist_log_views_data_alter(&$data) {
-  // Set default handler for the Views field b/c we are going to output string instead of int.
+  // Set default handler for the Views field
+  // b/c we are going to output string instead of int.
   $data['modules_checklist_log']['status']['field']['handler'] = 'views_handler_field';
   unset($data['modules_checklist_log']['status']['field']['float']);
 
-  // Set default handler for the Views field b/c we are going to output string instead of int.
+  // Set default handler for the Views field
+  // b/c we are going to output string instead of int.
   $data['modules_checklist_log']['type']['field']['handler'] = 'views_handler_field';
   unset($data['modules_checklist_log']['type']['field']['float']);
 
@@ -275,28 +284,32 @@ function modules_checklist_log_views_pre_render(&$view) {
 function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'views_exposed_form') {
     if ($form_state['view']->name == 'modules_checklist_log') {
-      // Transforms Views default Module Name text field to the user-friendly select list.
+      // Transforms Views default Module Name text field
+      // to the user-friendly select list.
       $form['module_name']['#type'] = 'select';
       $form['module_name']['#options'] = modules_checklist_log_get_module_names();
       $form['module_name']['#empty_option'] = ' - ' . t('None') . ' - ';
       $form['module_name']['#empty_value'] = '';
       unset($form['module_name']['#size']);
 
-      // Transforms Views default Status text field to the user-friendly select list.
+      // Transforms Views default Status text field
+      // to the user-friendly select list.
       $form['status']['#type'] = 'select';
       $form['status']['#options'] = modules_checklist_log_get_status();
       $form['status']['#empty_option'] = ' - ' . t('None') . ' - ';
       $form['status']['#empty_value'] = '';
       unset($form['status']['#size']);
 
-      // Transforms Views default Event Type text field to the user-friendly select list.
+      // Transforms Views default Event Type text field
+      // to the user-friendly select list.
       $form['type']['#type'] = 'select';
       $form['type']['#options'] = modules_checklist_log_get_types();
       $form['type']['#empty_option'] = ' - ' . t('None') . ' - ';
       $form['type']['#empty_value'] = '';
       unset($form['type']['#size']);
 
-      // Transforms Views default User text field to the user-friendly select list.
+      // Transforms Views default User text field
+      // to the user-friendly select list.
       $form['uid']['#type'] = 'select';
       $form['uid']['#options'] = modules_checklist_log_get_usernames();
       $form['uid']['#empty_option'] = ' - ' . t('None') . ' - ';
@@ -304,7 +317,8 @@ function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
       unset($form['uid']['#autocomplete_path']);
       unset($form['uid']['#description']);
 
-      // Transforms Views default IP text field to the user-friendly select list.
+      // Transforms Views default IP text field
+      // to the user-friendly select list.
       $form['ip']['#type'] = 'select';
       $form['ip']['#options'] = modules_checklist_log_get_ip();
       $form['ip']['#empty_option'] = ' - ' . t('None') . ' - ';
@@ -314,7 +328,7 @@ function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
       $form['#attached']['css'][] = drupal_get_path('module', 'modules_checklist_log') . '/modules_checklist_log.css';
     }
   }
-  else if ($form_id == 'modules_checklist_settings_form') {
+  elseif ($form_id == 'modules_checklist_settings_form') {
     $form['modules_checklist_log_rotation_enabled'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enable log rotation'),
@@ -341,10 +355,10 @@ function modules_checklist_log_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * Saves modules_checklist_log_entry entity to the specified storages.
+ * Saves modules_checklist_log_entry entity to the specified storage.
  *
  * @param array $log_item
- * @param array $storages
+ * @param array $storage
  *   Supports storage: db, variable, file.
  */
 function modules_checklist_log_save($log_item, $storage = array('db')) {
@@ -365,7 +379,8 @@ function modules_checklist_log_save($log_item, $storage = array('db')) {
     'ip' => !empty($log_item['ip']) ? $log_item['ip'] : $user->hostname,
     'status' => $module_status,
     'type' => !empty($log_item['type']) ? $log_item['type'] : '',
-    'timestamp' => !empty($log_item['timestamp']) ? $log_item['timestamp'] : REQUEST_TIME,
+    'timestamp' => !empty($log_item['timestamp']) ?
+      $log_item['timestamp'] : REQUEST_TIME,
   );
 
   foreach ($storage as $storage_type) {
@@ -469,7 +484,7 @@ function modules_checklist_log_get_ip() {
 }
 
 /**
- * Returns array of unique usernames from the Module Checklist log.
+ * Returns array of unique user names from the Module Checklist log.
  *
  * @return array
  */
@@ -506,15 +521,19 @@ function modules_checklist_log_get_type_label($type) {
     case MODULES_CHECKLIST_LOG_TYPE_INSTALLED:
       $label = t('installed');
       break;
+
     case MODULES_CHECKLIST_LOG_TYPE_ENABLED:
       $label = t('enabled');
       break;
+
     case MODULES_CHECKLIST_LOG_TYPE_DISABLED:
       $label = t('disabled');
       break;
+
     case MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED:
       $label = t('uninstalled');
       break;
+
     default:
       // Unknown module status.
       $label = '';
@@ -536,12 +555,15 @@ function modules_checklist_log_get_module_status_label($status, $t = TRUE) {
     case MODULES_CHECKLIST_LOG_STATUS_REQUIRED:
       $label = 'required';
       break;
+
     case MODULES_CHECKLIST_LOG_STATUS_OPTIONAL:
       $label = 'optional';
       break;
+
     case MODULES_CHECKLIST_LOG_STATUS_UNDEFINED:
       $label = 'disabled';
       break;
+
     default:
       // Module isn't listed as required or optional in config.
       $label = '';
@@ -573,7 +595,6 @@ function modules_checklist_log_get_backup_file_content($path) {
  * Returns status of the config based on the defined configuration.
  *
  * @param string $module
- * @param bool $t
  *
  * @return int
  */

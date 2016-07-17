@@ -1,9 +1,9 @@
 # Introduction
 
-Main idea of the module - to provide and maintain control over enabled modules
+Modules Checklist provides and maintains control over enabled modules
 on the project.
 
-Initially it was written for long-term Drupal project to control and monitor
+Initially it was written for a long-term Drupal project to control and monitor
 hundreds of enabled modules on multiple environments
 (DEV, QA, Stage, Load Test, Prod etc) during development.
 
@@ -17,25 +17,31 @@ hundreds of enabled modules on multiple environments
 
 ## Modules Checklist.
 
-Configuration: /admin/config/development/modules_checklist_settings
+Modules Checklist compares enabled modules with defined in settings.php
+lists of required and optional modules and warns site administrator 
+(on the Status report page and by email) in case of any discrepancy.
 
-It compares enabled modules with defined in settings.php
-lists of required and optional modules.
+It also warns if user is trying to disable required module or enable 
+the module which should be disabled.
 
  - Required module must be enabled at any time. Critical for the Project.
- List of required modules must be added to settings.php.
- - Optional module can be enabled, disabled or absent.
- List of optional modules must be added to settings.php.
+ List of required modules must be added to settings.php 
+ as $conf['modules_checklist_required_modules'] containing array 
+ of machine_names of the required modules.
+ - Optional or ignored module can be enabled, disabled or absent.
+ List of optional modules must be added to settings.php 
+ as $conf['modules_checklist_optional_modules'] containing array 
+ of machine_names of the optional modules.
  Example: Devel, Coder, Views UI
  (modules for developers and site administrators).
  - Disabled modules. Not required and not optional modules should be disabled
- or removed from the Project if this is possible.
+ or removed from the Project if this is possible. If you aren't sure 
+ about the module just add it to the list of optional modules.
 
-Module displays error message on the "Status Report" page
-in case of any discrepancy.
-
-Warns and notifies by email if user is trying to disable required module
-or enable the module which should be disabled.
+Configuration: /admin/config/development/modules_checklist_settings
+See "How to set up the module" section of the configuration page 
+for the detailed step by step instructions.
+Use "Configuration helper" to generate $conf variables.
 
 ## Modules Checklist log.
 
@@ -74,10 +80,10 @@ who installed / enabled / disabled / unistalled the module.
 
 # Future releases
 
-## Release 7x-1.1. Focus on Drupal best practises and usability.
-
  - highlight rows in the log table according to the priority of modules
  (required, optional etc).
+ - highlight rows in Configuration helper if required module is disabled (red) 
+ or disabled module is enabled (orange).
  - create views field handlers for Module Names and Type (Status) instead of
  altering for Views fields in modules_checklist_log_views_pre_render() and in
  modules_checklist_log_views_data_alter().

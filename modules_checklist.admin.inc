@@ -1,8 +1,8 @@
 <?php
 
 /**
- * @file.
- * modules_checklist_log.admin.inc.
+ * @file
+ * File modules_checklist_log.admin.inc.
  */
 
 /**
@@ -56,18 +56,20 @@ function modules_checklist_settings_form($form, &$form_state) {
       '<strong>' . t('Make sure you are able to modify !file for your Project.', array('!file' => conf_path() . '/settings.php')) . '</strong>',
       '<strong>' . t('Check modules you wish to track using "Configuration" form below. Modules can be required, optional or disabled.') . '</strong>',
       t('Required modules are important modules for the project. They must stay enabled all the time and added to $conf["modules_checklist_required_modules"].'),
-      t('Optional modules can be disabled, enabled or absent. Module just ignores them. Optional modules should be added to to $conf["modules_checklist_optional_modules"].'),
+      t('Optional or ignored modules can be disabled, enabled or absent. Module just ignores them. Optional modules should be added to to $conf["modules_checklist_optional_modules"]. If you aren\'t sure about the module just add it to the list of optional modules.'),
       t('Disabled modules are unwanted modules. In theory they should be removed from the project it this is possible or at least disabled.'),
-      '<strong>' . t('Click "!button" button to generate code for $conf variables.', array('!button' => MODULE_CHECKLIST_GENERATE_BUTTON_TEXT)) . '</strong>',
+      '<strong>' . t('Click "!button" button to generate code for $conf variables.', array('!button' => MODULES_CHECKLIST_GENERATE_BUTTON_TEXT)) . '</strong>',
       '<strong>' . t('Copy the generated code and paste it into !file to complete setup.', array('!file' => conf_path() . '/settings.php')) . '</strong>',
-      '<strong>' . t('Module compares the list of enabled modules with the lists of modules in $conf. In case of any discrepancy with the list of required or disabled modules it displays error message on !page page.',
+      '<strong>' . t('Module Checklist compares the list of enabled modules with the lists of modules in $conf. In case of any discrepancy with the list of required or disabled modules it displays error message on !page page.',
         array('!page' => l(t('Status report'), 'admin/reports/status'))) . '</strong>',
-      '<strong>' . t('If "Modules Checklist log" is !enabled then you will be able to browse the history and know who installed / enabled / disabled / unistalled the module.',
-        array('!enabled' => l(t('enabled'), 'admin/modules'))). '</strong>',
+      '<strong>' . t('If "Modules Checklist log" is !enabled then you will be able !view and know who installed / enabled / disabled / unistalled the module.',
+        array('!enabled' => l(t('enabled'), 'admin/modules'), '!view' => l(t('to browse the history'), 'admin/reports/modules_checklist_log'))) . '</strong>',
     ),
     '#type' => 'ol',
     '#attributes' => array(
-      'class' => array('modules_checklist_config_description'),
+      'class' => array(
+        'modules_checklist_config_description',
+      ),
     ),
     '#weight' => -80,
   );
@@ -91,7 +93,7 @@ function modules_checklist_settings_form($form, &$form_state) {
 
   $form['modules_checklist_config']['modules_checklist'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Configuration'),
+    '#title' => t('Configuration helper'),
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
     '#tree' => TRUE,
@@ -148,7 +150,7 @@ function modules_checklist_settings_form($form, &$form_state) {
 
   $form['modules_checklist_config']['modules_checklist_generate_config'] = array(
     '#type' => 'submit',
-    '#value' => t(MODULE_CHECKLIST_GENERATE_BUTTON_TEXT),
+    '#value' => t(MODULES_CHECKLIST_GENERATE_BUTTON_TEXT),
     '#submit' => array('modules_checklist_settings_form_generate_config'),
   );
 
@@ -220,36 +222,40 @@ function modules_checklist_settings_form($form, &$form_state) {
 }
 
 /**
- * Validate handler for the "Generate" button of modules_checklist_settings_form().
+ * Validate handler for the "Generate config" button.
  */
 function modules_checklist_settings_form_validate($form, &$form_state) {
   if ($form_state['values']['modules_checklist_notification']['enabled']) {
     if (empty($form_state['values']['modules_checklist_notification']['to'])) {
-      form_set_error('modules_checklist_notification][to', t('Please fill in required "To" field.'));
+      form_set_error('modules_checklist_notification][to',
+        t('Please fill in required "To" field.'));
     }
     else {
       $mails = explode(',', $form_state['values']['modules_checklist_notification']['to']);
 
       foreach ($mails as $mail) {
         if (!valid_email_address(trim($mail))) {
-          form_set_error('modules_checklist_notification][to', t('The syntax of the given e-mail address/addresses is invalid. Enter comma separated valid email addresses.'));
+          form_set_error('modules_checklist_notification][to',
+            t('The syntax of the given e-mail address/addresses is invalid. Enter comma separated valid email addresses.'));
           break;
         }
       }
     }
 
     if (empty($form_state['values']['modules_checklist_notification']['subject'])) {
-      form_set_error('modules_checklist_notification][subject', t('Please fill in required "Subject" field.'));
+      form_set_error('modules_checklist_notification][subject',
+        t('Please fill in required "Subject" field.'));
     }
 
     if (empty($form_state['values']['modules_checklist_notification']['body'])) {
-      form_set_error('modules_checklist_notification][body', t('Please fill in required "Body" field.'));
+      form_set_error('modules_checklist_notification][body',
+        t('Please fill in required "Body" field.'));
     }
   }
 }
 
 /**
- * Submit handler for the "Generate" button of modules_checklist_settings_form().
+ * Submit handler for the "Generate config" button.
  */
 function modules_checklist_settings_form_generate_config($form, &$form_state) {
   $messages = array(

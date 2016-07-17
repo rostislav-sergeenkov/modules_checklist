@@ -2,7 +2,7 @@
 
 /**
  * @file
- * modules_checklist_log.install.
+ * File modules_checklist_log.install.
  */
 
 /**
@@ -99,7 +99,7 @@ function modules_checklist_log_uninstall() {
 }
 
 /**
- * Implement hook_enable().
+ * Implements hook_enable().
  */
 function modules_checklist_log_enable() {
   $disabled_var = variable_get('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_DISABLED);
@@ -108,24 +108,28 @@ function modules_checklist_log_enable() {
   $disabled_backup_path = MODULES_CHECKLIST_LOG_BACKUP_DIR . '/modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_DISABLED;
   $uninstalled_backup_path = MODULES_CHECKLIST_LOG_BACKUP_DIR . '/modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED;
 
-  // Creates log entry who has previously disabled the module.
+  // Creates log entry containing information about
+  // who has disabled the module.
   if ($disabled_var) {
     modules_checklist_log_save($disabled_var);
     variable_del('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_DISABLED);
   }
-  // If variable was manually removed from the database - restore using backup file.
+  // If variable was manually removed from the database
+  // just restore using backup file.
   else {
     if (file_exists($disabled_backup_path)) {
       modules_checklist_log_save(modules_checklist_log_get_backup_file_content($disabled_backup_path));
     }
   }
 
-  // Creates log entry who has previously unistalled the module.
+  // Creates log entry containing information about
+  // who has previously unistalled the module.
   if ($uninstalled_var) {
     modules_checklist_log_save($uninstalled_var);
     variable_del('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED);
   }
-  // If variable was manually removed from the database - restore using backup file.
+  // If variable was manually removed from the database
+  // just restore using backup file.
   else {
     if (file_exists($uninstalled_backup_path)) {
       modules_checklist_log_save(modules_checklist_log_get_backup_file_content($uninstalled_backup_path));
