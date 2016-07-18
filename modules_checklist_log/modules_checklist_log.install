@@ -136,7 +136,7 @@ function modules_checklist_log_enable() {
     }
   }
 
-  // Remove backups because we no longer need them.
+  // Remove backup files because we no longer need them.
   if (file_exists($disabled_backup_path)) {
     drupal_unlink($disabled_backup_path);
   }

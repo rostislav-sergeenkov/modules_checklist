@@ -12,7 +12,7 @@ function modules_checklist_settings_form($form, &$form_state) {
   $modules_data = system_rebuild_module_data();
   $required_modules = variable_get('modules_checklist_required_modules');
   $optional_modules = variable_get('modules_checklist_optional_modules');
-  $notification_settings = variable_get('modules_checklist_notification', modules_checklist_get_notification_settings());
+  $notification_settings = variable_get('modules_checklist_notification', modules_checklist_get_default_notification_settings());
 
   if (!empty($form_state['storage']['config_content'])) {
     $form['modules_checklist_config_value'] = array(
@@ -156,7 +156,8 @@ function modules_checklist_settings_form($form, &$form_state) {
 
   $form['modules_checklist_config']['reset'] = array(
     '#type' => 'submit',
-    '#value' => t('Reset to the config values'),
+    '#value' => t('Reset'),
+    '#submit' => array('modules_checklist_settings_form_reset'),
   );
 
   $form['modules_checklist_notification'] = array(
@@ -255,7 +256,7 @@ function modules_checklist_settings_form_validate($form, &$form_state) {
 }
 
 /**
- * Submit handler for the "Generate config" button.
+ * Submit handler for the "Generate $conf variables" button.
  */
 function modules_checklist_settings_form_generate_config($form, &$form_state) {
   $messages = array(
@@ -299,6 +300,14 @@ function modules_checklist_settings_form_generate_config($form, &$form_state) {
 
   $form_state['storage']['config_content'] = implode("\r\n", $config_content);
   $form_state['rebuild'] = TRUE;
+}
+
+/**
+ * Submit handler for the "Reset" button.
+ */
+function modules_checklist_settings_form_reset($form, &$form_state) {
+  drupal_set_message(t('"Configuration helper" table has been flushed and now reflects $conf variables defined in !file.',
+    array('!file' => conf_path() . '/settings.php')));
 }
 
 /**

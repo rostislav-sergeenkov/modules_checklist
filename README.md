@@ -88,6 +88,7 @@ who installed / enabled / disabled / unistalled the module.
  altering for Views fields in modules_checklist_log_views_pre_render() and in
  modules_checklist_log_views_data_alter().
  - add filters by Date - use Date popup.
+ - add list of available tokens in the description of the email body.
 
 # Maintainers
 
@@ -96,3 +97,86 @@ who installed / enabled / disabled / unistalled the module.
 
 This project has been sponsored by EPAM Systems
 [https://www.drupal.org/epam-systems] (https://www.drupal.org/epam-systems)
+
+# Test cases
+
+(Information about test cases can be helpful to QA team testing the module)
+
+## Module Checklist
+
+### 1. Test Status message
+
+ * Check if $conf variables (required and optional lists of modules) exist 
+ in settings.php.   
+ * Check if any required modules have been removed from the file system.
+ * Check if any required modules are disabled.
+ * Checks if any module is enabled which doesn't belong 
+ to the list of required or optional modules.
+
+ * on Modules page (/admin/modules)
+   - Shows up on enable, disable, unistall the require and disabled modules.
+ * on Status report page (/admin/reports/status)
+ * on the Module Checklist configuration page 
+ (admin/config/development/modules_checklist_settings)
+ 
+### 2. Test error / warning message 
+
+ * On Modules page form submit
+   - if required disabled module has been enabled.
+   - if required enabled module has been disabled.   
+ * On Modules page (unistall phase) form submit
+   - if required module is going to be unistalled.
+   - if required module has been unistalled.
+
+### 3. Test "Modules Checklist settings" page 
+
+ (/admin/config/development/modules_checklist_settings)   
+ 
+ * access to the page must be restricted with the permission 
+ 'configure modules_checklist settings'.
+ * Check "How to set up the module" if this section is clear 
+ for site administrator.  
+ * Check "Configuration helper" if it reflects $conf variables in settings.php. 
+ Test on absent $conf variables.
+ * Check "Set all enabled modules as" radio buttons.
+ * Check "Uncheck/exclude all disabled modules".
+ * Check form submit logic of "Generate $conf variables" button.
+ * Check "Reset" button.
+   
+### 4. Test email notification (if enabled)
+
+ * Test Validation (/admin/config/development/modules_checklist_settings)
+   - if email address / addresses are valid.
+   - "Subject" and "Body" fields must be required.  
+
+ * Sends email on install, enable, disable, unistall required module 
+ manually using Modules page. Check email content.
+ * Sends email on install, enable, disable, unistall required module 
+ using Drush page. Check email content.
+
+## Module Checklist log
+
+### 1. Test log UI
+
+ * access to the log must be restricted with the permission 
+ 'access modules_checklist log'.
+ * filters and ordering by click on row titles.
+ * log entries that correspond to install, enable, disable, unistall 
+ actions on modules.
+ 
+### 2. Check if information available in log 
+
+ (/admin/reports/modules_checklist_log)
+ 
+ * who is disabling the module.
+ * who is unistalling the module.
+ * remove 'modules_checklist_log_status_*' variables from DB
+ * who has previously uninstalled and disabled the module.   
+ * who is installing and enabling the module.   
+ 
+### 3. Test "Modules Checklist settings" page 
+
+ (/admin/config/development/modules_checklist_settings) 
+ 
+ * Check log rotation by running cron.
+ 

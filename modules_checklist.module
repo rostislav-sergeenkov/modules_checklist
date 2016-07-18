@@ -5,16 +5,11 @@
  * File modules_checklist.module.
  */
 
-// ==== RELEASE 7x-1.0. Focus on functionality.
-// @todo write and test each feature of 2 modules.
-// @todo test email notification using drush.
-// @todo test all 5 situations: module can be: installed, enabled, disabled, uninstalled, physically removed.
-
-// -- release action items ---
+// @todo check all test cases defined in README.md.
 // @todo create Project Page and promote the module to the permanent d.org project https://www.drupal.org/node/161085.
 
 // Defines text on the "Generate" button.
-define('MODULES_CHECKLIST_GENERATE_BUTTON_TEXT', 'Generate config');
+define('MODULES_CHECKLIST_GENERATE_BUTTON_TEXT', 'Generate $conf variables');
 
 /**
  * Implements hook_help().
@@ -260,8 +255,8 @@ function modules_checklist_system_modules_submit($form, &$form_state) {
 
   if (!empty($required_disabled_modules)) {
     $message = format_plural(count($required_disabled_modules),
-      'Modules Checklist. Required module (!modules) was disabled. Please !enable it or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
-      'Modules Checklist. Required modules (!modules) were disabled. Please !enable them or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
+      'Modules Checklist. Required module (!modules) has been disabled. Please !enable it or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
+      'Modules Checklist. Required modules (!modules) have been disabled. Please !enable them or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
       array(
         '!modules' => implode(', ', $required_disabled_modules),
         '!exclude' => l(t('exclude'), 'admin/config/development/modules_checklist_settings'),
@@ -273,8 +268,8 @@ function modules_checklist_system_modules_submit($form, &$form_state) {
 
   if (!empty($required_enabled_modules)) {
     $message = format_plural(count($required_enabled_modules),
-      'Modules Checklist. Required module (!modules) was enabled.',
-      'Modules Checklist. Required modules (!modules) were enabled.',
+      'Modules Checklist. Required module (!modules) has been enabled.',
+      'Modules Checklist. Required modules (!modules) has been enabled.',
       array('!modules' => implode(', ', $required_enabled_modules)));
     drupal_set_message($message, 'status');
   }
@@ -311,8 +306,8 @@ function modules_checklist_system_modules_uninstall_confirm($form, &$form_state)
   else {
     if (!empty($required_unistalled_modules)) {
       $message = format_plural(count($required_unistalled_modules),
-        'Modules Checklist. Required module (!modules) was unistalled. Please !enable it or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
-        'Modules Checklist. Required modules (!modules) were unistalled. Please !enable them or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
+        'Modules Checklist. Required module (!modules) has been unistalled. Please !enable it or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
+        'Modules Checklist. Required modules (!modules) have been unistalled. Please !enable them or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules.',
         array(
           '!modules' => implode(', ', $required_unistalled_modules),
           '!enable' => l(t('enable'), 'admin/modules'),
@@ -334,7 +329,7 @@ function modules_checklist_system_modules_uninstall_confirm($form, &$form_state)
  * @param string $type
  */
 function modules_checklist_notify($modules, $type) {
-  $notification_settings = variable_get('modules_checklist_notification', modules_checklist_get_notification_settings());
+  $notification_settings = variable_get('modules_checklist_notification', modules_checklist_get_default_notification_settings());
 
   if ($notification_settings['enabled']) {
     $affected_modules = array();
@@ -374,12 +369,12 @@ function modules_checklist_status_check($modules_data) {
   // in settings.php.
   if (!is_array($config['required_modules'])) {
     $config_exists = FALSE;
-    $message[] = 'List of required modules wasn\'t found in !file. Please !configure the list of required modules.';
+    $message[] = "List of required modules wasn't found in !file. Please !configure the list of required modules.";
   }
 
   if (!is_array($config['optional_modules'])) {
     $config_exists = FALSE;
-    $message[] = 'List of optional modules wasn\'t found in !file. Please !configure the list of optional modules.';
+    $message[] = "List of optional modules wasn't found in !file. Please !configure the list of optional modules.";
   }
 
   if (!$config_exists) {
@@ -394,8 +389,7 @@ function modules_checklist_status_check($modules_data) {
     );
   }
 
-  // Checks if any required modules have been removed
-  // from the file system.
+  // Checks if any require module has been removed from the file system.
   $non_existent_modules = array_diff($config['required_modules'], $available_modules);
 
   if (!empty($non_existent_modules)) {
@@ -577,7 +571,7 @@ function modules_checklist_map_module_names($modules) {
  */
 function modules_checklist_send_mail($modules, $type) {
   if (!empty($modules)) {
-    $settings = variable_get('modules_checklist_notification', modules_checklist_get_notification_settings());
+    $settings = variable_get('modules_checklist_notification', modules_checklist_get_default_notification_settings());
     $data = array(
       'modules_checklist' => array(
         'modules' => implode(', ', $modules),
@@ -598,8 +592,9 @@ function modules_checklist_send_mail($modules, $type) {
  *
  * @return array
  */
-function modules_checklist_get_notification_settings() {
+function modules_checklist_get_default_notification_settings() {
   $superadmin = user_load(1);
+
   $body = array(
     'Required modules ([modules_checklist:modules]) were [modules_checklist:action] by [current-user:name] ([current-user:mail], IP address [current-user:ip-address]).',
     'Date: [current-date:modules_checklist_format].',
