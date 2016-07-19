@@ -13,6 +13,7 @@ function modules_checklist_settings_form($form, &$form_state) {
   $required_modules = variable_get('modules_checklist_required_modules');
   $optional_modules = variable_get('modules_checklist_optional_modules');
   $notification_settings = variable_get('modules_checklist_notification', modules_checklist_get_default_notification_settings());
+  $email_tokens = modules_checklist_get_email_tokens();
 
   if (!empty($form_state['storage']['config_content'])) {
     $form['modules_checklist_config_value'] = array(
@@ -57,7 +58,7 @@ function modules_checklist_settings_form($form, &$form_state) {
       '<strong>' . t('Check modules you wish to track using "Configuration" form below. Modules can be required, optional or disabled.') . '</strong>',
       t('Required modules are important modules for the project. They must stay enabled all the time and added to $conf["modules_checklist_required_modules"].'),
       t('Optional or ignored modules can be disabled, enabled or absent. Module just ignores them. Optional modules should be added to to $conf["modules_checklist_optional_modules"]. If you aren\'t sure about the module just add it to the list of optional modules.'),
-      t('Disabled modules are unwanted modules. In theory they should be removed from the project it this is possible or at least disabled.'),
+      t('Disabled modules are unwanted modules. In theory they should be removed from the project it this is possible or at least disabled. If there are no required or optional modules just set all modules as disabled.'),
       '<strong>' . t('Click "!button" button to generate code for $conf variables.', array('!button' => MODULES_CHECKLIST_GENERATE_BUTTON_TEXT)) . '</strong>',
       '<strong>' . t('Copy the generated code and paste it into !file to complete setup.', array('!file' => conf_path() . '/settings.php')) . '</strong>',
       '<strong>' . t('Module Checklist compares the list of enabled modules with the lists of modules in $conf. In case of any discrepancy with the list of required or disabled modules it displays error message on !page page.',
@@ -193,7 +194,8 @@ function modules_checklist_settings_form($form, &$form_state) {
   $form['modules_checklist_notification']['subject'] = array(
     '#title' => t('Subject') . ' <span class="form-required" title="' . t('This field is required.') . '">*</span>',
     '#type' => 'textfield',
-    '#description' => t('Enter the subject of the email.'),
+    '#description' => t('Enter the subject of the email. Supports tokens: !tokens.',
+      array('!tokens' => implode(', ', $email_tokens))),
     '#default_value' => $notification_settings['subject'],
     '#states' => array(
       'visible' => array(
@@ -205,7 +207,8 @@ function modules_checklist_settings_form($form, &$form_state) {
   $form['modules_checklist_notification']['body'] = array(
     '#title' => t('Message') . ' <span class="form-required" title="' . t('This field is required.') . '">*</span>',
     '#type' => 'textarea',
-    '#description' => t('Enter the content of the email.'),
+    '#description' => t('Enter the content of the email. Supports tokens: !tokens.',
+      array('!tokens' => implode(', ', $email_tokens))),
     '#default_value' => $notification_settings['body'],
     '#states' => array(
       'visible' => array(

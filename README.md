@@ -80,6 +80,9 @@ who installed / enabled / disabled / unistalled the module.
 
 # Future releases
 
+ - fix issue: module folder can be renamed, however it doesn't show up 
+ in status check. 
+ - define constants for messages like 'Please enable it or exclude...'.
  - highlight rows in the log table according to the priority of modules
  (required, optional etc).
  - highlight rows in Configuration helper if required module is disabled (red) 
@@ -88,7 +91,8 @@ who installed / enabled / disabled / unistalled the module.
  altering for Views fields in modules_checklist_log_views_pre_render() and in
  modules_checklist_log_views_data_alter().
  - add filters by Date - use Date popup.
- - add list of available tokens in the description of the email body.
+ - get list of email tokens dynamically instead of using 
+ modules_checklist_get_email_tokens().
 
 # Maintainers
 
@@ -106,18 +110,19 @@ This project has been sponsored by EPAM Systems
 
 ### 1. Test Status message
 
- * Check if $conf variables (required and optional lists of modules) exist 
- in settings.php.   
- * Check if any required modules have been removed from the file system.
- * Check if any required modules are disabled.
- * Checks if any module is enabled which doesn't belong 
- to the list of required or optional modules.
-
- * on Modules page (/admin/modules)
-   - Shows up on enable, disable, unistall the require and disabled modules.
  * on Status report page (/admin/reports/status)
  * on the Module Checklist configuration page 
  (admin/config/development/modules_checklist_settings)
+ 
+   - Check if $conf variables (required and optional lists of modules) exist 
+   in settings.php.   
+   - Check if any required modules have been removed from the file system.
+   - Check if any required modules are disabled.
+   - Checks if any module is enabled which doesn't belong 
+   - the list of required or optional modules.
+
+ * on Modules page (/admin/modules)
+   - Shows up on enable, disable, unistall the required and disabled modules.
  
 ### 2. Test error / warning message 
 

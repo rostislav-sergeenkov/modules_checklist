@@ -5,7 +5,10 @@
  * File modules_checklist.module.
  */
 
-// @todo check all test cases defined in README.md.
+// @todo fix failed test cases
+// 1. modules_checklist_status_check() display information about required and optional modules at the same time. However if config doesn't exist throw error immediately.
+// 2. check email on install, enable, disable, unistall required module using Drush page. Check email content.
+// 3. check all cases starting with remove 'modules_checklist_log_status_*' variables from DB.
 // @todo create Project Page and promote the module to the permanent d.org project https://www.drupal.org/node/161085.
 
 // Defines text on the "Generate" button.
@@ -282,11 +285,14 @@ function modules_checklist_system_modules_submit($form, &$form_state) {
  */
 function modules_checklist_system_modules_uninstall_confirm($form, &$form_state) {
   $required_unistalled_modules = array();
+  $required_modules = variable_get('modules_checklist_required_modules', array());
   $modules_data = system_rebuild_module_data();
 
   foreach ($form_state['values']['uninstall'] as $module => $unistall) {
     if ($unistall) {
-      $required_unistalled_modules[] = $modules_data[$module]->info['name'];
+      if (in_array($module, $required_modules)) {
+        $required_unistalled_modules[] = $modules_data[$module]->info['name'];
+      }
     }
   }
 
@@ -419,7 +425,7 @@ function modules_checklist_status_check($modules_data) {
   if (!empty($disabled_required_modules)) {
     $message = array_merge($message, array(
       'Required modules are disabled: %modules.',
-      'Please !enable them or !exclude from the list of required modules in !file.',
+      'Please !enable them or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules in !file.',
     ));
 
     return array(
@@ -566,6 +572,8 @@ function modules_checklist_map_module_names($modules) {
 /**
  * Sends email regarding enabled/disabled required modules.
  *
+ * @see modules_checklist_get_email_tokens().
+ *
  * @param $modules
  * @param $type
  */
@@ -610,6 +618,24 @@ function modules_checklist_get_default_notification_settings() {
 }
 
 /**
+ * Returns array of email tokens that module supports.
+ *
+ * @return array
+ */
+function modules_checklist_get_email_tokens() {
+  return array(
+    '[site:name]',
+    '[current-user:name]',
+    '[current-user:mail]',
+    '[current-user:ip-address]',
+    '[current-date:modules_checklist_format]',
+    '[modules_checklist:modules]',
+    '[modules_checklist:action]',
+    '[modules_checklist:config_url]',
+  );
+}
+
+/**
  * Renders table on the Modules Checklist settings page.
  *
  * @return string
@@ -617,9 +643,9 @@ function modules_checklist_get_default_notification_settings() {
 function theme_modules_checklist_table($variables) {
   $modules = $variables['form']['modules'];
   $header = array(
-    t('config: required'),
-    t('config: optional'),
-    t('config: disabled'),
+    t('$conf: required'),
+    t('$conf: optional'),
+    t('$conf: disabled'),
     t('module status'),
     t('module'),
   );
