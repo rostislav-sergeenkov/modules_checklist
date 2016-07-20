@@ -87,7 +87,7 @@ function modules_checklist_log_disable() {
 function modules_checklist_log_uninstall() {
   drupal_load('module', 'modules_checklist_log');
   $module_name = 'modules_checklist_log';
-  // Saves into variable who is unistalling the module.
+  // Saves into variable who is uninstalling the module.
   modules_checklist_log_save(
     array(
       'module_name' => 'modules_checklist_log',
@@ -96,6 +96,10 @@ function modules_checklist_log_uninstall() {
     ),
     array('variable', 'file')
   );
+  // Delete 'modules_checklist_log' from DB.
+  if ($view = views_get_view('modules_checklist_log')) {
+    $view->delete();
+  }
 }
 
 /**
@@ -123,7 +127,7 @@ function modules_checklist_log_enable() {
   }
 
   // Creates log entry containing information about
-  // who has previously unistalled the module.
+  // who has previously uninstalled the module.
   if ($uninstalled_var) {
     modules_checklist_log_save($uninstalled_var);
     variable_del('modules_checklist_log_status_' . MODULES_CHECKLIST_LOG_TYPE_UNINSTALLED);

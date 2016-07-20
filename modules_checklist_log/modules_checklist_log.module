@@ -26,10 +26,11 @@ define('MODULES_CHECKLIST_LOG_STATUS_OPTIONAL', 2);
  */
 function modules_checklist_log_help($path, $arg) {
   if ($path == 'admin/help#modules_checklist_log') {
-    $output = '<p>' . t('!module records in database who and when installed / enabled / disabled / unistalled modules on the site.',
+    $output = '<p>' . t('!module records in database who has installed / enabled / disabled / uninstalled a module on the site.',
         array('!module' => '<strong>' . t('Modules Checklist log') . '</strong>')) . '</p>';
-    $output .= '<p>' . t('Provides !admin_ui for browsing log and filtering log entries.',
+    $output .= '<p>' . t('Provides !admin_ui for browsing log and filtering recorded events.',
         array('!admin_ui' => l(t('Administration UI'), 'admin/reports/modules_checklist_log'))) . '</p>';
+    $output .= '<p>' . t('Administrator should check the log on a regular basis to ensure his site is working properly.') . '</p>';
 
     return $output;
   }
@@ -140,7 +141,7 @@ function modules_checklist_log_entity_property_info() {
     'type' => array(
       'type'  => 'integer',
       'label' => t('Type'),
-      'description' => t('The type of the event (disabled, unistalled etc).'),
+      'description' => t('The type of the event (disabled, uninstalled etc).'),
       'schema field' => 'type',
     ),
     'timestamp' => array(

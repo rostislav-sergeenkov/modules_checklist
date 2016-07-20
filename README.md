@@ -1,11 +1,11 @@
 # Introduction
 
-Modules Checklist provides and maintains control over enabled modules
-on the project.
+The Modules Checklist module provides and maintains control 
+over enabled and disabled modules of the project.
 
 Initially it was written for a long-term Drupal project to control and monitor
-hundreds of enabled modules on multiple environments
-(DEV, QA, Stage, Load Test, Prod etc) during development.
+hundreds of modules on multiple environments
+(DEV, QA, Stage, Load Test, Prod etc) during development. 
 
  * For a full description of the module, visit the project page:
  [http://drupal.org/project/modules-checklist]
@@ -17,12 +17,15 @@ hundreds of enabled modules on multiple environments
 
 ## Modules Checklist.
 
-Modules Checklist compares enabled modules with defined in settings.php
-lists of required and optional modules and warns site administrator 
-(on the Status report page and by email) in case of any discrepancy.
-
+The Modules Checklist compares enabled modules with the lists 
+of required and optional modules defined in settings.php. 
+It warns site administrator on the Status report page in case 
+of any discrepancy between defined lists of modules 
+and their actual status.
 It also warns if user is trying to disable required module or enable 
 the module which should be disabled.
+It can send email to site administrator if required module 
+has been disabled, uninstalled, enabled or installed by someone.
 
  - Required module must be enabled at any time. Critical for the Project.
  List of required modules must be added to settings.php 
@@ -45,15 +48,24 @@ Use "Configuration helper" to generate $conf variables.
 
 ## Modules Checklist log.
 
-Records in database who and when installed / enabled / disabled / unistalled
-modules on the site.
+Records in database who has installed / enabled / disabled / uninstalled 
+a module on the site.
 
 Provides administration UI (/admin/reports/modules_checklist_log)
-for browsing log and filtering log entries.
+for browsing log and filtering recorded events by  
 
-# Installation and unistallation
+ - module name, 
+ - module status (required, optional or disabled), 
+ - action type on module (installed, enabled, disabled, uninstalled),
+ - username and IP address,
+ - date.
+ 
+Administrator should check the log on a regular basis 
+to ensure his site is working properly. 
 
-Install and uninstall as you would normally install / unistall
+# Installation and uninstallation
+
+Install and uninstall as you would normally install / uninstall
 a contributed Drupal module.
 See [http://drupal.org/documentation/install/modules-themes/modules-7]
 (http://drupal.org/documentation/install/modules-themes/modules-7)
@@ -76,7 +88,7 @@ error message will be shown on the module settings page and Status report page.
 
 If "Modules Checklist log" is enabled then you will be able to browse
 (/admin/reports/modules_checklist_log) the history and figure out
-who installed / enabled / disabled / unistalled the module.
+who installed / enabled / disabled / uninstalled the module.
 
 # Future releases
 
@@ -126,16 +138,16 @@ This project has been sponsored by EPAM Systems
    - the list of required or optional modules.
 
  * on Modules page (/admin/modules)
-   - Shows up on enable, disable, unistall the required and disabled modules.
+   - Shows up on enable, disable, uninstall the required and disabled modules.
  
 ### 2. Test error / warning message 
 
  * On Modules page form submit
    - if required disabled module has been enabled.
    - if required enabled module has been disabled.   
- * On Modules page (unistall phase) form submit
-   - if required module is going to be unistalled.
-   - if required module has been unistalled.
+ * On Modules page (uninstall phase) form submit
+   - if required module is going to be uninstalled.
+   - if required module has been uninstalled.
 
 ### 3. Test "Modules Checklist settings" page 
 
@@ -158,9 +170,9 @@ This project has been sponsored by EPAM Systems
    - if email address / addresses are valid.
    - "Subject" and "Body" fields must be required.  
 
- * Sends email on install, enable, disable, unistall required module 
+ * Sends email on install, enable, disable, uninstall required module 
  manually using Modules page. Check email content.
- * Sends email on install, enable, disable, unistall required module 
+ * Sends email on install, enable, disable, uninstall required module 
  using Drush page. Check email content.
 
 ## Module Checklist log
@@ -170,7 +182,7 @@ This project has been sponsored by EPAM Systems
  * access to the log must be restricted with the permission 
  'access modules_checklist log'.
  * filters and ordering by click on row titles.
- * log entries that correspond to install, enable, disable, unistall 
+ * log entries that correspond to install, enable, disable, uninstall 
  actions on modules.
  
 ### 2. Check if information available in log 
@@ -178,7 +190,7 @@ This project has been sponsored by EPAM Systems
  (/admin/reports/modules_checklist_log)
  
  * who is disabling the module.
- * who is unistalling the module.
+ * who is uninstalling the module.
  * remove 'modules_checklist_log_status_*' variables from DB after 
  disabling the module and then enable it. Check log. 
  Log entry should be present.

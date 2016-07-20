@@ -62,7 +62,7 @@ function modules_checklist_settings_form($form, &$form_state) {
       '<strong>' . t('Copy the generated code and paste it into !file to complete setup.', array('!file' => conf_path() . '/settings.php')) . '</strong>',
       '<strong>' . t('Module Checklist compares the list of enabled modules with the lists of modules in $conf. In case of any discrepancy with the list of required or disabled modules it displays error message on !page page.',
         array('!page' => l(t('Status report'), 'admin/reports/status'))) . '</strong>',
-      '<strong>' . t('If "Modules Checklist log" is !enabled then you will be able !view and know who installed / enabled / disabled / unistalled the module.',
+      '<strong>' . t('If "Modules Checklist log" is !enabled then you will be able !view and know who installed / enabled / disabled / uninstalled the module.',
         array('!enabled' => l(t('enabled'), 'admin/modules'), '!view' => l(t('to browse the history'), 'admin/reports/modules_checklist_log'))) . '</strong>',
     ),
     '#type' => 'ol',
