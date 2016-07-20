@@ -5,12 +5,6 @@
  * File modules_checklist.module.
  */
 
-// @todo fix failed test cases
-// 1. modules_checklist_status_check() display information about required and optional modules at the same time. However if config doesn't exist throw error immediately.
-// 2. check email on install, enable, disable, unistall required module using Drush page. Check email content.
-// 3. check all cases starting with remove 'modules_checklist_log_status_*' variables from DB.
-// @todo create Project Page and promote the module to the permanent d.org project https://www.drupal.org/node/161085.
-
 // Defines text on the "Generate" button.
 define('MODULES_CHECKLIST_GENERATE_BUTTON_TEXT', 'Generate $conf variables');
 
@@ -53,6 +47,7 @@ function modules_checklist_permission() {
     'configure modules_checklist settings' => array(
       'title' => t('Configure Modules Checklist settings'),
       'description' => t('Access and configure Modules Checklist settings.'),
+      'warning' => t('Warning: Give to trusted roles only; this permission has security implications.'),
     ),
   );
 }
@@ -363,7 +358,9 @@ function modules_checklist_notify($modules, $type) {
  */
 function modules_checklist_status_check($modules_data) {
   $config_exists = TRUE;
-  $message = array('<strong>Modules Checklist status check.</strong>');
+  $messages = array('<strong>Modules Checklist status check.</strong>');
+  $error_messages = $messages;
+  $message_status = 'status';
 
   $t = get_t();
   $config = modules_checklist_get_configuration();
@@ -375,19 +372,20 @@ function modules_checklist_status_check($modules_data) {
   // in settings.php.
   if (!is_array($config['required_modules'])) {
     $config_exists = FALSE;
-    $message[] = "List of required modules wasn't found in !file. Please !configure the list of required modules.";
+    $messages[] = "List of required modules wasn't found in !file. Please !configure the list of required modules.";
   }
 
   if (!is_array($config['optional_modules'])) {
     $config_exists = FALSE;
-    $message[] = "List of optional modules wasn't found in !file. Please !configure the list of optional modules.";
+    $messages[] = "List of optional modules wasn't found in !file. Please !configure the list of optional modules.";
   }
 
+  // The module isn't configured properly. Throw error immediately.
   if (!$config_exists) {
     return array(
       'status' => 'error',
       'message' => t(
-        implode($message, '<br />'), array(
+        implode($messages, '<br />'), array(
           '!configure' => l($t('set up'), 'admin/config/development/modules_checklist_settings'),
           '!file' => $config_path,
         )
@@ -400,45 +398,39 @@ function modules_checklist_status_check($modules_data) {
 
   if (!empty($non_existent_modules)) {
     // Some required modules have been physically removed from the file system.
-    $message = array_merge($message, array(
-      'List of required modules in !file contains modules that no longer exist in the system: %modules.',
+    $messages = array(
+      'List of required modules in !file contains modules that no longer exist in the file system: %modules.',
       'Please !click on "!button" button to skip non-existent modules and refresh the configuration.',
       'Then add it to the !file',
-    ));
-
-    return array(
-      'status' => 'error',
-      'message' => t(
-        implode($message, '<br />'), array(
-          '!file' => $config_path,
-          '%modules' => implode(', ', $non_existent_modules),
-          '!click' => l(t('click'), 'admin/config/development/modules_checklist_settings'),
-          '!button' => t(MODULES_CHECKLIST_GENERATE_BUTTON_TEXT),
-        )
-      ),
     );
+    $error_messages[] = t(
+      implode($messages, '<br />'), array(
+        '!file' => $config_path,
+        '%modules' => implode(', ', $non_existent_modules),
+        '!click' => l(t('click'), 'admin/config/development/modules_checklist_settings'),
+        '!button' => t(MODULES_CHECKLIST_GENERATE_BUTTON_TEXT),
+      )
+    );
+    $message_status = 'error';
   }
 
   // Checks if any required modules are disabled.
   $disabled_required_modules = array_diff($config['required_modules'], $enabled_modules);
 
   if (!empty($disabled_required_modules)) {
-    $message = array_merge($message, array(
+    $messages = array(
       'Required modules are disabled: %modules.',
       'Please !enable them or !exclude (requires "Configure Modules Checklist settings" permission) from the list of required modules in !file.',
-    ));
-
-    return array(
-      'status' => 'error',
-      'message' => t(
-        implode($message, '<br />'), array(
-          '!file' => $config_path,
-          '%modules' => implode(', ', array_values(modules_checklist_map_module_names($disabled_required_modules))),
-          '!enable' => l(t('enable'), 'admin/modules'),
-          '!exclude' => l(t('exclude'), 'admin/config/development/modules_checklist_settings'),
-        )
-      ),
     );
+    $error_messages[] = t(
+      implode($messages, '<br />'), array(
+        '!file' => $config_path,
+        '%modules' => implode(', ', array_values(modules_checklist_map_module_names($disabled_required_modules))),
+        '!enable' => l(t('enable'), 'admin/modules'),
+        '!exclude' => l(t('exclude'), 'admin/config/development/modules_checklist_settings'),
+      )
+    );
+    $message_status = 'error';
   }
 
   // Checks if any module is enabled which doesn't belong
@@ -447,38 +439,43 @@ function modules_checklist_status_check($modules_data) {
     array_merge($config['required_modules'], $config['optional_modules']));
 
   if (!empty($untracked_modules)) {
-    $message = array_merge($message, array(
-      'Some enabled modules must be !disabled: %modules.',
+    $messages = array(
+      'Some enabled modules should be !disabled: %modules.',
       'Alternatively they can be !added to the list of required modules or to the list of optional modules.',
-    ));
+    );
+    $error_messages[] = t(
+      implode($messages, '<br />'), array(
+        '!file' => $config_path,
+        '!disabled' => l(t('disabled'), 'admin/modules'),
+        '!added' => l(t('added'), 'admin/config/development/modules_checklist_settings'),
+        '%modules' => implode(', ', array_values(modules_checklist_map_module_names($untracked_modules))),
+      )
+    );
+    // If no errors with higher priority found throw 'warning'.
+    $message_status = $message_status != 'error' ? 'warning' : 'error';
+  }
 
+  if ($message_status != 'status') {
     return array(
-      'status' => 'warning',
-      'message' => t(
-        implode($message, '<br />'), array(
-          '!file' => $config_path,
-          '!disabled' => l(t('disabled'), 'admin/modules'),
-          '!added' => l(t('added'), 'admin/config/development/modules_checklist_settings'),
-          '%modules' => implode(', ', array_values(modules_checklist_map_module_names($untracked_modules))),
-        )
-      ),
+      'status' => $message_status,
+      'message' => implode($error_messages, '<br />'),
     );
   }
 
   // All is OK.
   $optional_modules = '';
-  $message[] = 'List of required modules was found in !file.';
-  $message[] = 'List of optional modules was found in !file.';
+  $messages[] = 'List of required modules was found in !file.';
+  $messages[] = 'List of optional modules was found in !file.';
 
   if (!empty($config['optional_modules'])) {
-    $message[] = 'Optional modules are enabled: !modules.';
+    $messages[] = 'Optional modules are enabled: !modules.';
     $optional_modules = implode(', ', array_values(modules_checklist_map_module_names($config['optional_modules'])));
   }
 
   return array(
     'status' => 'status',
     'message' => t(
-      implode($message, '<br />'), array(
+      implode($messages, '<br />'), array(
         '!file' => $config_path,
         '!modules' => $optional_modules,
       )
@@ -563,7 +560,14 @@ function modules_checklist_map_module_names($modules) {
   $module_data = system_rebuild_module_data();
 
   foreach ($modules as $module_machine_name) {
-    $module_names[$module_machine_name] = $module_data[$module_machine_name]->info['name'];
+    if (!empty($module_data[$module_machine_name]->info['name'])) {
+      // Module exists in the file system.
+      $module_names[$module_machine_name] = $module_data[$module_machine_name]->info['name'];
+    }
+    else {
+      // Module was removed from the file system.
+      $module_names[$module_machine_name] = $module_machine_name;
+    }
   }
 
   return $module_names;

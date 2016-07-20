@@ -85,14 +85,18 @@ who installed / enabled / disabled / unistalled the module.
  - define constants for messages like 'Please enable it or exclude...'.
  - highlight rows in the log table according to the priority of modules
  (required, optional etc).
- - highlight rows in Configuration helper if required module is disabled (red) 
- or disabled module is enabled (orange).
+ - highlight rows conating required and optional modules 
+ in the "Configuration helper".
+ - highlight rows in the "Configuration helper" if required module 
+ is disabled (red) or disabled module is enabled (orange).
+ - create more convenient controls for the "Configuration helper" table.
  - create views field handlers for Module Names and Type (Status) instead of
  altering for Views fields in modules_checklist_log_views_pre_render() and in
  modules_checklist_log_views_data_alter().
  - add filters by Date - use Date popup.
  - get list of email tokens dynamically instead of using 
  modules_checklist_get_email_tokens().
+ - check user_access() before outputting the link to the page.
 
 # Maintainers
 
@@ -175,7 +179,9 @@ This project has been sponsored by EPAM Systems
  
  * who is disabling the module.
  * who is unistalling the module.
- * remove 'modules_checklist_log_status_*' variables from DB
+ * remove 'modules_checklist_log_status_*' variables from DB after 
+ disabling the module and then enable it. Check log. 
+ Log entry should be present.
  * who has previously uninstalled and disabled the module.   
  * who is installing and enabling the module.   
  

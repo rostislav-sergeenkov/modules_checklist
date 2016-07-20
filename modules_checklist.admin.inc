@@ -10,8 +10,7 @@
  */
 function modules_checklist_settings_form($form, &$form_state) {
   $modules_data = system_rebuild_module_data();
-  $required_modules = variable_get('modules_checklist_required_modules');
-  $optional_modules = variable_get('modules_checklist_optional_modules');
+  $conf = modules_checklist_get_configuration();
   $notification_settings = variable_get('modules_checklist_notification', modules_checklist_get_default_notification_settings());
   $email_tokens = modules_checklist_get_email_tokens();
 
@@ -102,8 +101,10 @@ function modules_checklist_settings_form($form, &$form_state) {
   );
 
   foreach ($modules_data as $module_machine_name => $module) {
-    $module_is_required = (int) (is_array($required_modules) && in_array($module_machine_name, $required_modules));
-    $module_is_optional = (int) (is_array($optional_modules) && in_array($module_machine_name, $optional_modules));
+    $module_is_required = (int) (is_array($conf['required_modules']) &&
+      in_array($module_machine_name, $conf['required_modules']));
+    $module_is_optional = (int) (is_array($conf['optional_modules']) &&
+      in_array($module_machine_name, $conf['optional_modules']));
     $module_is_disabled = (int) !$module_is_required && !$module_is_optional;
 
     $form['modules_checklist_config']['modules_checklist']['modules'][$module_machine_name]['required'] = array(
