@@ -87,15 +87,11 @@ function modules_checklist_token_info() {
           'name' => t('Action on a module'),
           'description' => t('Returns the name of the action on a module (installed, enabled etc).'),
         ),
-      ),
-      'current-date' => array(
-        'modules_checklist_format' => array(
+        'modules_checklist_date' => array(
           'name' => t('Date of the event'),
           'description' => t('Returns date of the event in the format defined by "Modules Checklist".'),
         ),
-      ),
-      'current-user' => array(
-        'ip-address' => array(
+        'ip_address' => array(
           'name' => t('IP address'),
           'description' => t('IP address of the current user.'),
         ),
@@ -110,23 +106,7 @@ function modules_checklist_token_info() {
 function modules_checklist_tokens($type, $tokens, array $data = array(), array $options = array()) {
   $replacements = array();
 
-  if ($type == 'current-user') {
-    global $user;
-
-    foreach ($tokens as $name => $original) {
-      if ($name == 'ip-address') {
-        $replacements[$original] = $user->hostname;
-      }
-    }
-  }
-  elseif ($type == 'current-date') {
-    foreach ($tokens as $name => $original) {
-      if ($name == 'modules_checklist_format') {
-        $replacements[$original] = date('m/d/Y H:i', REQUEST_TIME);
-      }
-    }
-  }
-  elseif ($type == 'modules_checklist') {
+  if ($type == 'modules_checklist') {
     foreach ($tokens as $name => $original) {
       if ($name == 'modules') {
         if (!empty($data['modules_checklist']['modules'])) {
@@ -147,6 +127,13 @@ function modules_checklist_tokens($type, $tokens, array $data = array(), array $
       elseif ($name == 'config_url') {
         $replacements[$original] = url('admin/config/development/modules_checklist_settings',
           array('absolute' => TRUE));
+      }
+      elseif ($name == 'ip_address') {
+        global $user;
+        $replacements[$original] = $user->hostname;
+      }
+      elseif ($name == 'modules_checklist_date') {
+        $replacements[$original] = date('m/d/Y H:i', REQUEST_TIME);
       }
     }
   }
@@ -608,8 +595,8 @@ function modules_checklist_get_default_notification_settings() {
   $superadmin = user_load(1);
 
   $body = array(
-    'Required modules ([modules_checklist:modules]) were [modules_checklist:action] by [current-user:name] ([current-user:mail], IP address [current-user:ip-address]).',
-    'Date: [current-date:modules_checklist_format].',
+    'Required modules ([modules_checklist:modules]) were [modules_checklist:action] by [current-user:name] ([current-user:mail], IP address [modules_checklist:ip_address]).',
+    'Date: [modules_checklist:modules_checklist_date].',
     'More information on [modules_checklist:config_url].',
   );
 
@@ -631,8 +618,8 @@ function modules_checklist_get_email_tokens() {
     '[site:name]',
     '[current-user:name]',
     '[current-user:mail]',
-    '[current-user:ip-address]',
-    '[current-date:modules_checklist_format]',
+    '[modules_checklist:ip_address]',
+    '[modules_checklist:modules_checklist_date]',
     '[modules_checklist:modules]',
     '[modules_checklist:action]',
     '[modules_checklist:config_url]',

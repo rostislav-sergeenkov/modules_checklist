@@ -1,5 +1,6 @@
+/* Overrides Drupal default CSS for .form-item-type */
 .view-modules-checklist-log .form-item-type {
   width: auto;
   margin: 0;
-  padding: 0;
+  padding: 9px 0;
 }
