@@ -153,13 +153,6 @@ function modules_checklist_modules_installed($modules) {
  */
 function modules_checklist_modules_enabled($modules) {
   modules_checklist_notify($modules, 'enabled');
-
-  $modules_data = system_rebuild_module_data();
-  $status = modules_checklist_status_check($modules_data);
-
-  if ($status['status'] != 'status') {
-    drupal_set_message($status['message'], $status['status']);
-  }
 }
 
 /**
@@ -167,13 +160,6 @@ function modules_checklist_modules_enabled($modules) {
  */
 function modules_checklist_modules_disabled($modules) {
   modules_checklist_notify($modules, 'disabled');
-
-  $modules_data = system_rebuild_module_data();
-  $status = modules_checklist_status_check($modules_data);
-
-  if ($status['status'] != 'status') {
-    drupal_set_message($status['message'], $status['status']);
-  }
 }
 
 /**
